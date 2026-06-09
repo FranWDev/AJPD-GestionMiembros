@@ -1,0 +1,9 @@
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY target/gestion /app/gestion
+RUN chmod +x /app/gestion
+ENV SERVER_PORT=${PORT}
+ENV TZ=Europe/Madrid
+RUN useradd -m springuser
+USER springuser
+ENTRYPOINT ["/app/gestion"]
