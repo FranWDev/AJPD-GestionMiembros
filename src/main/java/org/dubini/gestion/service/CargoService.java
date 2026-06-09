@@ -9,8 +9,10 @@ import org.dubini.gestion.repository.CargoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class CargoService {
 
     private final CargoRepository repo;
@@ -28,12 +30,14 @@ public class CargoService {
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public CargoDto createCargo(CargoDto dto) {
         Cargo c = new Cargo(null, dto.getNombre());
         c = repo.save(c);
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public CargoDto updateCargo(Long id, CargoDto dto) {
         Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
         c.setNombre(dto.getNombre());
@@ -41,6 +45,7 @@ public class CargoService {
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public void deleteCargo(Long id) {
         Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
         if (repo.countMiembrosByCargoId(id) > 0) {

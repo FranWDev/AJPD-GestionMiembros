@@ -1,5 +1,6 @@
 package org.dubini.gestion.controller;
 
+import org.dubini.gestion.dto.HistorialCargoDto;
 import org.dubini.gestion.dto.MiembroRequestDto;
 import org.dubini.gestion.dto.MiembroResponseDto;
 import org.dubini.gestion.service.MiembroService;
@@ -36,6 +37,21 @@ public class MiembroController {
     @PutMapping("/{id}")
     public ResponseEntity<MiembroResponseDto> updateMiembro(@PathVariable Long id, @RequestBody MiembroRequestDto dto) {
         return ResponseEntity.ok(service.updateMiembro(id, dto));
+    }
+
+    @PutMapping("/{miembroId}/historial/{historialId}")
+    public ResponseEntity<MiembroResponseDto> updateHistorialCargo(
+            @PathVariable Long miembroId,
+            @PathVariable Long historialId,
+            @RequestBody HistorialCargoDto dto) {
+        return ResponseEntity.ok(service.updateHistorialCargo(miembroId, historialId, dto));
+    }
+
+    @DeleteMapping("/{miembroId}/historial/{historialId}")
+    public ResponseEntity<MiembroResponseDto> deleteHistorialCargo(
+            @PathVariable Long miembroId,
+            @PathVariable Long historialId) {
+        return ResponseEntity.ok(service.deleteHistorialCargo(miembroId, historialId));
     }
 
     @DeleteMapping("/{id}")

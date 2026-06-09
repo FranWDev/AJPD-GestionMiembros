@@ -140,6 +140,36 @@ public class MiembroService {
     }
 
     @Transactional
+    public MiembroResponseDto updateHistorialCargo(Long miembroId, Long historialId, HistorialCargoDto dto) {
+        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        HistorialCargo hc = m.getHistorialCargos().stream()
+                .filter(h -> Objects.equals(h.getId(), historialId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Registro de historial no encontrado"));
+
+        hc.setFechaInicio(dto.getFechaInicio());
+        hc.setFechaFin(dto.getFechaFin());
+        if (dto.getCargo() != null) {
+            hc.setCargoId(dto.getCargo().getId());
+        }
+
+        m = miembroRepo.save(m);
+        return getMiembroById(m.getId());
+    }
+
+    @Transactional
+    public MiembroResponseDto deleteHistorialCargo(Long miembroId, Long historialId) {
+        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        boolean removed = m.getHistorialCargos().removeIf(h -> Objects.equals(h.getId(), historialId));
+        if (!removed) {
+            throw new ResourceNotFoundException("Registro de historial no encontrado");
+        }
+
+        m = miembroRepo.save(m);
+        return getMiembroById(m.getId());
+    }
+
+    @Transactional
     public void deleteMiembro(Long id) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         miembroRepo.delete(m);

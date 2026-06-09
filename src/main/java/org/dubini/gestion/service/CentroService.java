@@ -9,8 +9,10 @@ import org.dubini.gestion.repository.CentroRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class CentroService {
 
     private final CentroRepository repo;
@@ -28,12 +30,14 @@ public class CentroService {
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public CentroDto createCentro(CentroDto dto) {
         Centro c = new Centro(null, dto.getNombre());
         c = repo.save(c);
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public CentroDto updateCentro(Long id, CentroDto dto) {
         Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
         c.setNombre(dto.getNombre());
@@ -41,6 +45,7 @@ public class CentroService {
         return DtoMapper.toDto(c);
     }
 
+    @Transactional
     public void deleteCentro(Long id) {
         Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
         if (repo.countMiembrosByCentroId(id) > 0) {

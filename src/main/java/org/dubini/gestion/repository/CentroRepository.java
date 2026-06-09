@@ -10,6 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CentroRepository extends ListCrudRepository<Centro, Long>, PagingAndSortingRepository<Centro, Long> {
 
-    @Query("SELECT COUNT(*) FROM miembros WHERE centro_id = :centroId")
+    @Query("SELECT COUNT(*) FROM miembros WHERE CENTRO_ID = :centroId")
     long countMiembrosByCentroId(@Param("centroId") Long centroId);
 }

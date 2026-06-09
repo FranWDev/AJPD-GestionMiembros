@@ -28,6 +28,6 @@ public class Miembro {
     private LocalDate fechaCargo;
     private String enlaceWhatsapp;
 
-    @MappedCollection(idColumn = "miembro_id")
+    @MappedCollection(idColumn = "MIEMBRO_ID")
     private Set<HistorialCargo> historialCargos = new HashSet<>();
 }
