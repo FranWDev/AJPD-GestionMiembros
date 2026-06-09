@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Native Binary
         run: |
-          mvn -Pnative clean package -DskipTests -Dspring-boot.native.build-args="-O2 -J-Xmx6g"
+          mvn -Pnative clean package -DskipTests -Dspring-boot.native.build-args="-march=x86-64 -O2 -J-Xmx6g"
 
       - name: Compress Binary with UPX
         run: upx target/gestion
