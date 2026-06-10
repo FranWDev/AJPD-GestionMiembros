@@ -1,6 +1,8 @@
 package org.dubini.gestion.repository;
 
 import org.dubini.gestion.model.Centro;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -12,4 +14,6 @@ public interface CentroRepository extends ListCrudRepository<Centro, Long>, Pagi
 
     @Query("SELECT COUNT(*) FROM miembros WHERE CENTRO_ID = :centroId")
     long countMiembrosByCentroId(@Param("centroId") Long centroId);
+
+    Page<Centro> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }

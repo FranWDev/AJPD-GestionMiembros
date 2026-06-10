@@ -137,4 +137,31 @@ public class CargoControllerIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("No se puede eliminar el cargo porque está asignado a uno o más miembros"));
     }
+
+    @Test
+    public void testGetCargosWithNameFilter() throws Exception {
+        Cargo c1 = cargoRepository.save(new Cargo(null, "Secretario Ejecutivo"));
+        cargoRepository.save(new Cargo(null, "Vocal de Distrito"));
+
+        mockMvc.perform(get("/api/cargos?nombre=Secretario")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombre").value("Secretario Ejecutivo"));
+
+        mockMvc.perform(get("/api/cargos?nombre=ejecutivo")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombre").value("Secretario Ejecutivo"));
+
+        String newCargoEmptyBody = new JSONObject()
+                .put("nombre", "   ")
+                .toString();
+
+        mockMvc.perform(post("/api/cargos")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(newCargoEmptyBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.nombre").value("El nombre del cargo es obligatorio"));
+    }
 }

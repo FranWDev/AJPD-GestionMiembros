@@ -193,7 +193,7 @@ public class MiembroControllerIntegrationTest {
                 .put("centroId", centroId)
                 .put("telefono", "123456789")
                 .put("correo", "juan@test.com")
-                .put("nifCif", "12345678A")
+                .put("nifCif", "12345678Z")
                 .put("nacionalidad", "Española")
                 .put("domicilio", "Calle Principal 123")
                 .put("fechaNacimiento", "1990-01-01")
@@ -206,7 +206,7 @@ public class MiembroControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nifCif").value("12345678A"))
+                .andExpect(jsonPath("$.nifCif").value("12345678Z"))
                 .andExpect(jsonPath("$.nacionalidad").value("Española"))
                 .andExpect(jsonPath("$.domicilio").value("Calle Principal 123"))
                 .andExpect(jsonPath("$.fechaNacimiento").value("1990-01-01"))
@@ -234,5 +234,126 @@ public class MiembroControllerIntegrationTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fechaBaja").isEmpty());
+    }
+
+    @Test
+    public void testMiembroValidationAndFilters() throws Exception {
+        String invalidNameBody = new JSONObject()
+                .put("nombreRazonSocial", "   ")
+                .put("centroId", centroId)
+                .put("nifCif", "12345678Z")
+                .toString();
+
+        mockMvc.perform(post("/api/miembros")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidNameBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.nombreRazonSocial").value("El nombre o razón social del miembro es obligatorio"));
+
+        String invalidNifBody = new JSONObject()
+                .put("nombreRazonSocial", "Valid Name")
+                .put("centroId", centroId)
+                .put("nifCif", "12345678A")
+                .toString();
+
+        mockMvc.perform(post("/api/miembros")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidNifBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.nifCif").value("DNI/NIF/NIE no es válido"));
+
+        Miembro m1 = new Miembro();
+        m1.setNombreRazonSocial("Andres Iniesta");
+        m1.setCentroId(centroId);
+        m1.setCargoId(cargoId1);
+        m1.setNacionalidad("Española");
+        m1.setNifCif("12345678Z");
+        m1.setTelefono("666111222");
+        m1.setCorreo("andres@iniesta.com");
+        m1.setFechaAlta(LocalDate.of(2026, 6, 1));
+        m1.setFechaCargo(LocalDate.now());
+        m1.setHistorialCargos(new HashSet<>());
+        miembroRepository.save(m1);
+
+        Miembro m2 = new Miembro();
+        m2.setNombreRazonSocial("Zinedine Zidane");
+        m2.setCentroId(centroId);
+        m2.setCargoId(cargoId2);
+        m2.setNacionalidad("Francesa");
+        m2.setNifCif("44444444T");
+        m2.setTelefono("777111222");
+        m2.setCorreo("zizou@zidane.com");
+        m2.setFechaAlta(LocalDate.of(2026, 6, 2));
+        m2.setFechaBaja(LocalDate.of(2026, 6, 8));
+        m2.setFechaCargo(LocalDate.now());
+        m2.setHistorialCargos(new HashSet<>());
+        miembroRepository.save(m2);
+
+        mockMvc.perform(get("/api/miembros?filtroBaja=ACTIVOS")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?filtroBaja=BAJAS")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
+
+        mockMvc.perform(get("/api/miembros")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2));
+
+        mockMvc.perform(get("/api/miembros?centroId=" + centroId + "&cargoId=" + cargoId1)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?nacionalidad=francesa")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
+
+        mockMvc.perform(get("/api/miembros?fechaAltaDesde=2026-06-01&fechaAltaHasta=2026-06-01")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?buscar=iniesta")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?buscar=zizou@")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
+
+        mockMvc.perform(get("/api/miembros?buscar=666111")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?buscar=44444444T")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
+
+        mockMvc.perform(get("/api/miembros?buscar=And")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
+
+        mockMvc.perform(get("/api/miembros?buscar=Zid")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
     }
 }

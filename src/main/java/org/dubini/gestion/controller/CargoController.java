@@ -1,5 +1,6 @@
 package org.dubini.gestion.controller;
 
+import jakarta.validation.Valid;
 import org.dubini.gestion.dto.CargoDto;
 import org.dubini.gestion.service.CargoService;
 import org.springframework.data.domain.Page;
@@ -18,8 +19,10 @@ public class CargoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CargoDto>> getCargos(Pageable pageable) {
-        return ResponseEntity.ok(service.getCargos(pageable));
+    public ResponseEntity<Page<CargoDto>> getCargos(
+            @RequestParam(required = false) String nombre,
+            Pageable pageable) {
+        return ResponseEntity.ok(service.getCargos(nombre, pageable));
     }
 
     @GetMapping("/{id}")
@@ -28,12 +31,12 @@ public class CargoController {
     }
 
     @PostMapping
-    public ResponseEntity<CargoDto> createCargo(@RequestBody CargoDto dto) {
+    public ResponseEntity<CargoDto> createCargo(@Valid @RequestBody CargoDto dto) {
         return ResponseEntity.ok(service.createCargo(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CargoDto> updateCargo(@PathVariable Long id, @RequestBody CargoDto dto) {
+    public ResponseEntity<CargoDto> updateCargo(@PathVariable Long id, @Valid @RequestBody CargoDto dto) {
         return ResponseEntity.ok(service.updateCargo(id, dto));
     }
 

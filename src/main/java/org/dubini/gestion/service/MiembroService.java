@@ -32,8 +32,25 @@ public class MiembroService {
     }
 
     @Transactional(readOnly = true)
-    public Page<MiembroResponseDto> getMiembros(Pageable pageable) {
-        Page<Miembro> pg = miembroRepo.findAll(pageable);
+    public Page<MiembroResponseDto> getMiembros(
+            String filtroBaja,
+            Long centroId,
+            Long cargoId,
+            LocalDate fechaAltaDesde,
+            LocalDate fechaAltaHasta,
+            LocalDate fechaBajaDesde,
+            LocalDate fechaBajaHasta,
+            String nacionalidad,
+            String buscar,
+            Pageable pageable
+    ) {
+        Page<Miembro> pg = miembroRepo.findByFilters(
+                filtroBaja, centroId, cargoId,
+                fechaAltaDesde, fechaAltaHasta,
+                fechaBajaDesde, fechaBajaHasta,
+                nacionalidad, buscar,
+                pageable
+        );
         List<Miembro> members = pg.getContent();
 
         if (members.isEmpty()) {

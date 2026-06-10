@@ -1,5 +1,6 @@
 package org.dubini.gestion.controller;
 
+import jakarta.validation.Valid;
 import org.dubini.gestion.dto.CentroDto;
 import org.dubini.gestion.service.CentroService;
 import org.springframework.data.domain.Page;
@@ -18,8 +19,10 @@ public class CentroController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CentroDto>> getCentros(Pageable pageable) {
-        return ResponseEntity.ok(service.getCentros(pageable));
+    public ResponseEntity<Page<CentroDto>> getCentros(
+            @RequestParam(required = false) String nombre,
+            Pageable pageable) {
+        return ResponseEntity.ok(service.getCentros(nombre, pageable));
     }
 
     @GetMapping("/{id}")
@@ -28,12 +31,12 @@ public class CentroController {
     }
 
     @PostMapping
-    public ResponseEntity<CentroDto> createCentro(@RequestBody CentroDto dto) {
+    public ResponseEntity<CentroDto> createCentro(@Valid @RequestBody CentroDto dto) {
         return ResponseEntity.ok(service.createCentro(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CentroDto> updateCentro(@PathVariable Long id, @RequestBody CentroDto dto) {
+    public ResponseEntity<CentroDto> updateCentro(@PathVariable Long id, @Valid @RequestBody CentroDto dto) {
         return ResponseEntity.ok(service.updateCentro(id, dto));
     }
 

@@ -130,4 +130,31 @@ public class CentroControllerIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("No se puede eliminar el centro porque está asignado a uno o más miembros"));
     }
+
+    @Test
+    public void testGetCentrosWithNameFilter() throws Exception {
+        Centro c1 = centroRepository.save(new Centro(null, "Madrid Norte"));
+        centroRepository.save(new Centro(null, "Barcelona Sur"));
+
+        mockMvc.perform(get("/api/centros?nombre=Madrid")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombre").value("Madrid Norte"));
+
+        mockMvc.perform(get("/api/centros?nombre=norte")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombre").value("Madrid Norte"));
+
+        String newCentroEmptyBody = new JSONObject()
+                .put("nombre", "   ")
+                .toString();
+
+        mockMvc.perform(post("/api/centros")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(newCentroEmptyBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.nombre").value("El nombre del centro es obligatorio"));
+    }
 }

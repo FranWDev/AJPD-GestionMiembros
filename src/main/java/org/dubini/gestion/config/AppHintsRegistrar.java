@@ -40,6 +40,8 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.dubini.gestion.service.CargoService");
         registerClassIfExists(hints, "org.dubini.gestion.service.MiembroService");
         registerClassIfExists(hints, "org.dubini.gestion.exception.BusinessRuleException");
+        registerClassIfExists(hints, "org.dubini.gestion.validation.ValidNifCif");
+        registerClassIfExists(hints, "org.dubini.gestion.validation.NifCifValidator");
     }
 
     private void registerEntity(RuntimeHints hints, String className) {

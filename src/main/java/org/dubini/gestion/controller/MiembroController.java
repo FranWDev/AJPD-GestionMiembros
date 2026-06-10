@@ -1,14 +1,17 @@
 package org.dubini.gestion.controller;
 
+import jakarta.validation.Valid;
 import org.dubini.gestion.dto.HistorialCargoDto;
 import org.dubini.gestion.dto.MiembroRequestDto;
 import org.dubini.gestion.dto.MiembroResponseDto;
 import org.dubini.gestion.service.MiembroService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -22,8 +25,25 @@ public class MiembroController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<MiembroResponseDto>> getMiembros(Pageable pageable) {
-        return ResponseEntity.ok(service.getMiembros(pageable));
+    public ResponseEntity<Page<MiembroResponseDto>> getMiembros(
+            @RequestParam(required = false) String filtroBaja,
+            @RequestParam(required = false) Long centroId,
+            @RequestParam(required = false) Long cargoId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaHasta,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaHasta,
+            @RequestParam(required = false) String nacionalidad,
+            @RequestParam(required = false) String buscar,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(service.getMiembros(
+                filtroBaja, centroId, cargoId,
+                fechaAltaDesde, fechaAltaHasta,
+                fechaBajaDesde, fechaBajaHasta,
+                nacionalidad, buscar,
+                pageable
+        ));
     }
 
     @GetMapping("/{id}")
@@ -32,12 +52,12 @@ public class MiembroController {
     }
 
     @PostMapping
-    public ResponseEntity<MiembroResponseDto> createMiembro(@RequestBody MiembroRequestDto dto) {
+    public ResponseEntity<MiembroResponseDto> createMiembro(@Valid @RequestBody MiembroRequestDto dto) {
         return ResponseEntity.ok(service.createMiembro(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MiembroResponseDto> updateMiembro(@PathVariable Long id, @RequestBody MiembroRequestDto dto) {
+    public ResponseEntity<MiembroResponseDto> updateMiembro(@PathVariable Long id, @Valid @RequestBody MiembroRequestDto dto) {
         return ResponseEntity.ok(service.updateMiembro(id, dto));
     }
 

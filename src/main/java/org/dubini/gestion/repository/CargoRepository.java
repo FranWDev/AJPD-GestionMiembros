@@ -1,6 +1,8 @@
 package org.dubini.gestion.repository;
 
 import org.dubini.gestion.model.Cargo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -15,4 +17,6 @@ public interface CargoRepository extends ListCrudRepository<Cargo, Long>, Paging
 
     @Query("SELECT COUNT(*) FROM historial_cargos WHERE CARGO_ID = :cargoId")
     long countHistorialByCargoId(@Param("cargoId") Long cargoId);
+
+    Page<Cargo> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 }

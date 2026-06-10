@@ -21,7 +21,10 @@ public class CentroService {
         this.repo = repo;
     }
 
-    public Page<CentroDto> getCentros(Pageable pageable) {
+    public Page<CentroDto> getCentros(String nombre, Pageable pageable) {
+        if (nombre != null && !nombre.trim().isEmpty()) {
+            return repo.findByNombreContainingIgnoreCase(nombre.trim(), pageable).map(DtoMapper::toDto);
+        }
         return repo.findAll(pageable).map(DtoMapper::toDto);
     }
 

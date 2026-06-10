@@ -1,5 +1,6 @@
 package org.dubini.gestion.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,5 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CargoDto {
     private Long id;
+    @NotBlank(message = "El nombre del cargo es obligatorio")
     private String nombre;
 }
