@@ -1,6 +1,8 @@
 package org.dubini.gestion.controller;
 
-import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.Map;
+
 import org.dubini.gestion.dto.HistorialCargoDto;
 import org.dubini.gestion.dto.MiembroRequestDto;
 import org.dubini.gestion.dto.MiembroResponseDto;
@@ -9,13 +11,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/miembros")
+@Tag(name = "Miembros", description = "Endpoints para la gestión de miembros y sus datos asociados")
 public class MiembroController {
 
     private final MiembroService service;
@@ -24,17 +38,18 @@ public class MiembroController {
         this.service = service;
     }
 
+    @Operation(summary = "Listar miembros con filtros", description = "Obtiene una lista paginada de miembros permitiendo múltiples criterios de filtrado")
     @GetMapping
     public ResponseEntity<Page<MiembroResponseDto>> getMiembros(
-            @RequestParam(required = false) String filtroBaja,
-            @RequestParam(required = false) Long centroId,
-            @RequestParam(required = false) Long cargoId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaDesde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaHasta,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaDesde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaHasta,
-            @RequestParam(required = false) String nacionalidad,
-            @RequestParam(required = false) String buscar,
+            @Parameter(description = "Filtro de estado (ACTIVO, BAJA, TODOS)") @RequestParam(required = false) String filtroBaja,
+            @Parameter(description = "Filtrar por ID de centro") @RequestParam(required = false) Long centroId,
+            @Parameter(description = "Filtrar por ID de cargo") @RequestParam(required = false) Long cargoId,
+            @Parameter(description = "Fecha alta desde (ISO)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaDesde,
+            @Parameter(description = "Fecha alta hasta (ISO)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAltaHasta,
+            @Parameter(description = "Fecha baja desde (ISO)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaDesde,
+            @Parameter(description = "Fecha baja hasta (ISO)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBajaHasta,
+            @Parameter(description = "Filtrar por nacionalidad") @RequestParam(required = false) String nacionalidad,
+            @Parameter(description = "Búsqueda textual (nombre, correo, NIF...)") @RequestParam(required = false) String buscar,
             Pageable pageable
     ) {
         return ResponseEntity.ok(service.getMiembros(
@@ -46,21 +61,27 @@ public class MiembroController {
         ));
     }
 
+    @Operation(summary = "Obtener miembro por ID")
+    @ApiResponse(responseCode = "200", description = "Miembro encontrado")
+    @ApiResponse(responseCode = "404", description = "Miembro no encontrado")
     @GetMapping("/{id}")
     public ResponseEntity<MiembroResponseDto> getMiembroById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getMiembroById(id));
     }
 
+    @Operation(summary = "Crear nuevo miembro")
     @PostMapping
     public ResponseEntity<MiembroResponseDto> createMiembro(@Valid @RequestBody MiembroRequestDto dto) {
         return ResponseEntity.ok(service.createMiembro(dto));
     }
 
+    @Operation(summary = "Actualizar miembro existente")
     @PutMapping("/{id}")
     public ResponseEntity<MiembroResponseDto> updateMiembro(@PathVariable Long id, @Valid @RequestBody MiembroRequestDto dto) {
         return ResponseEntity.ok(service.updateMiembro(id, dto));
     }
 
+    @Operation(summary = "Actualizar entrada de historial de cargos del miembro")
     @PutMapping("/{miembroId}/historial/{historialId}")
     public ResponseEntity<MiembroResponseDto> updateHistorialCargo(
             @PathVariable Long miembroId,
@@ -69,6 +90,7 @@ public class MiembroController {
         return ResponseEntity.ok(service.updateHistorialCargo(miembroId, historialId, dto));
     }
 
+    @Operation(summary = "Eliminar entrada de historial de cargos del miembro")
     @DeleteMapping("/{miembroId}/historial/{historialId}")
     public ResponseEntity<MiembroResponseDto> deleteHistorialCargo(
             @PathVariable Long miembroId,
@@ -76,18 +98,21 @@ public class MiembroController {
         return ResponseEntity.ok(service.deleteHistorialCargo(miembroId, historialId));
     }
 
+    @Operation(summary = "Dar de baja a un miembro")
     @PutMapping("/{id}/baja")
     public ResponseEntity<MiembroResponseDto> darDeBaja(
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body) {
+            @Parameter(description = "Cuerpo con la fecha de baja (opcional)") @RequestBody(required = false) Map<String, String> body) {
         return ResponseEntity.ok(service.darDeBaja(id, body));
     }
 
+    @Operation(summary = "Reactivar un miembro dado de baja")
     @DeleteMapping("/{id}/baja")
     public ResponseEntity<MiembroResponseDto> reactivarMiembro(@PathVariable Long id) {
         return ResponseEntity.ok(service.reactivarMiembro(id));
     }
 
+    @Operation(summary = "Eliminar un miembro")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMiembro(@PathVariable Long id) {
         service.deleteMiembro(id);

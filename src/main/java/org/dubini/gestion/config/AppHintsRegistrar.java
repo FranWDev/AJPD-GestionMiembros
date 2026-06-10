@@ -1,9 +1,12 @@
 package org.dubini.gestion.config;
 
-import org.springframework.aot.hint.*;
 import java.io.Serializable;
-import org.springframework.security.core.userdetails.User;
+
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 
 public class AppHintsRegistrar implements RuntimeHintsRegistrar {
 
@@ -47,6 +50,11 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.dubini.gestion.validation.NifCifValidator");
         registerClassIfExists(hints, "org.dubini.gestion.dto.CargoHistorialDto");
         registerClassIfExists(hints, "org.dubini.gestion.dto.CargoHistorialEditDto");
+
+        registerClassIfExists(hints, "org.springdoc.core.configuration.SpringDocConfiguration");
+        registerClassIfExists(hints, "org.springdoc.core.properties.SpringDocConfigProperties");
+        registerClassIfExists(hints, "org.springdoc.core.properties.SwaggerUiConfigProperties");
+        registerClassIfExists(hints, "org.dubini.gestion.config.OpenApiConfig");
     }
 
     private void registerEntity(RuntimeHints hints, String className) {
