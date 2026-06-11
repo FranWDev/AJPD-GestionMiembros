@@ -49,9 +49,9 @@ public class MiembroRepositoryImpl implements MiembroRepositoryCustom {
         List<String> whereClauses = new ArrayList<>();
         MapSqlParameterSource params = new MapSqlParameterSource();
 
-        if ("ACTIVOS".equalsIgnoreCase(filtroBaja)) {
+        if ("ACTIVOS".equalsIgnoreCase(filtroBaja) || "ACTIVO".equalsIgnoreCase(filtroBaja)) {
             whereClauses.add("FECHA_BAJA IS NULL");
-        } else if ("BAJAS".equalsIgnoreCase(filtroBaja)) {
+        } else if ("BAJAS".equalsIgnoreCase(filtroBaja) || "BAJA".equalsIgnoreCase(filtroBaja)) {
             whereClauses.add("FECHA_BAJA IS NOT NULL");
         }
 
