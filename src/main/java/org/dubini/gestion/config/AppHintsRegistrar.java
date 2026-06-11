@@ -55,6 +55,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.springdoc.core.properties.SpringDocConfigProperties");
         registerClassIfExists(hints, "org.springdoc.core.properties.SwaggerUiConfigProperties");
         registerClassIfExists(hints, "org.dubini.gestion.config.OpenApiConfig");
+        registerClassIfExists(hints, "org.dubini.gestion.config.CacheConfig");
     }
 
     private void registerEntity(RuntimeHints hints, String className) {

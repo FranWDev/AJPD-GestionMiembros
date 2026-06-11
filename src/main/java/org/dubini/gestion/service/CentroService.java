@@ -9,6 +9,9 @@ import org.dubini.gestion.repository.CentroRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -21,6 +24,7 @@ public class CentroService {
         this.repo = repo;
     }
 
+    @Cacheable(value = "centros")
     public Page<CentroDto> getCentros(String nombre, Pageable pageable) {
         if (nombre != null && !nombre.trim().isEmpty()) {
             return repo.findByNombreContainingIgnoreCase(nombre.trim(), pageable).map(DtoMapper::toDto);
@@ -28,12 +32,14 @@ public class CentroService {
         return repo.findAll(pageable).map(DtoMapper::toDto);
     }
 
+    @Cacheable(value = "centro", key = "#id")
     public CentroDto getCentroById(Long id) {
         Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
         return DtoMapper.toDto(c);
     }
 
     @Transactional
+    @CacheEvict(value = "centros", allEntries = true)
     public CentroDto createCentro(CentroDto dto) {
         Centro c = new Centro(null, dto.getNombre());
         c = repo.save(c);
@@ -41,6 +47,12 @@ public class CentroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "centros", allEntries = true),
+            @CacheEvict(value = "centro", key = "#id"),
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", allEntries = true)
+    })
     public CentroDto updateCentro(Long id, CentroDto dto) {
         Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
         c.setNombre(dto.getNombre());
@@ -49,6 +61,12 @@ public class CentroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "centros", allEntries = true),
+            @CacheEvict(value = "centro", key = "#id"),
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", allEntries = true)
+    })
     public void deleteCentro(Long id) {
         Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
         if (repo.countMiembrosByCentroId(id) > 0) {

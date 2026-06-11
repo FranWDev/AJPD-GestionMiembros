@@ -12,6 +12,9 @@ import org.dubini.gestion.repository.MiembroRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -33,6 +36,7 @@ public class MiembroService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "miembros")
     public Page<MiembroResponseDto> getMiembros(
             String filtroBaja,
             Long centroId,
@@ -93,6 +97,7 @@ public class MiembroService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "miembro", key = "#id")
     public MiembroResponseDto getMiembroById(Long id) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         Map<Long, Centro> centroMap = new HashMap<>();
@@ -114,6 +119,10 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public MiembroResponseDto createMiembro(MiembroRequestDto dto) {
         Miembro m = new Miembro();
         DtoMapper.updateEntity(m, dto);
@@ -132,6 +141,11 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#id"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public MiembroResponseDto updateMiembro(Long id, MiembroRequestDto dto) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         
@@ -163,6 +177,11 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#miembroId"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public MiembroResponseDto updateHistorialCargo(Long miembroId, Long historialId, HistorialCargoDto dto) {
         Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         HistorialCargo hc = m.getHistorialCargos().stream()
@@ -183,6 +202,11 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#miembroId"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public MiembroResponseDto deleteHistorialCargo(Long miembroId, Long historialId) {
         Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         HistorialCargo toDelete = m.getHistorialCargos().stream()
@@ -208,12 +232,21 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#id"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public void deleteMiembro(Long id) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         miembroRepo.delete(m);
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#id")
+    })
     public MiembroResponseDto darDeBaja(Long id, Map<String, String> body) {
         LocalDate fechaBaja = null;
         if (body != null && body.containsKey("fechaBaja") && body.get("fechaBaja") != null && !body.get("fechaBaja").isEmpty()) {
@@ -226,6 +259,10 @@ public class MiembroService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", key = "#id")
+    })
     public MiembroResponseDto reactivarMiembro(Long id) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
         m.setFechaBaja(null);

@@ -15,6 +15,9 @@ import org.dubini.gestion.repository.MiembroRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -36,6 +39,7 @@ public class CargoService {
         this.miembroRepo = miembroRepo;
     }
 
+    @Cacheable(value = "cargos")
     public Page<CargoDto> getCargos(String nombre, Pageable pageable) {
         if (nombre != null && !nombre.trim().isEmpty()) {
             return repo.findByNombreContainingIgnoreCase(nombre.trim(), pageable).map(DtoMapper::toDto);
@@ -43,12 +47,14 @@ public class CargoService {
         return repo.findAll(pageable).map(DtoMapper::toDto);
     }
 
+    @Cacheable(value = "cargo", key = "#id")
     public CargoDto getCargoById(Long id) {
         Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
         return DtoMapper.toDto(c);
     }
 
     @Transactional
+    @CacheEvict(value = "cargos", allEntries = true)
     public CargoDto createCargo(CargoDto dto) {
         Cargo c = new Cargo(null, dto.getNombre());
         c = repo.save(c);
@@ -56,6 +62,13 @@ public class CargoService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "cargos", allEntries = true),
+            @CacheEvict(value = "cargo", key = "#id"),
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", allEntries = true),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public CargoDto updateCargo(Long id, CargoDto dto) {
         Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
         c.setNombre(dto.getNombre());
@@ -64,6 +77,13 @@ public class CargoService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "cargos", allEntries = true),
+            @CacheEvict(value = "cargo", key = "#id"),
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", allEntries = true),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
+    })
     public void deleteCargo(Long id) {
         Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
         if (repo.countMiembrosByCargoId(id) > 0) {
@@ -75,6 +95,7 @@ public class CargoService {
         repo.delete(c);
     }
 
+    @Cacheable(value = "cargoHistorial")
     public Page<CargoHistorialDto> getCargoHistorial(
             Long cargoId,
             LocalDate fechaInicioDesde,
@@ -96,6 +117,11 @@ public class CargoService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "cargoHistorial", allEntries = true),
+            @CacheEvict(value = "miembros", allEntries = true),
+            @CacheEvict(value = "miembro", allEntries = true)
+    })
     public CargoHistorialDto updateCargoHistorial(Long id, CargoHistorialEditDto dto) {
         Long miembroId = miembroRepo.findMiembroIdByHistorialId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Registro de historial no encontrado"));
