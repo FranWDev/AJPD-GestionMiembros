@@ -420,4 +420,102 @@ public class MiembroControllerIntegrationTest {
         assertEquals(cargoId1, remainingHc.getCargoId());
         assertNull(remainingHc.getFechaFin());
     }
+
+    @Test
+    public void testMiembroBajaFinalizaCargo() throws Exception {
+        String body = new JSONObject()
+                .put("nombreRazonSocial", "Test Baja Cargo")
+                .put("centroId", centroId)
+                .put("telefono", "123456789")
+                .put("correo", "baja_cargo@test.com")
+                .put("cargoId", cargoId1)
+                .put("fechaCargo", "2026-06-01")
+                .toString();
+
+        String createResponse = mockMvc.perform(post("/api/miembros")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cargo.id").value(cargoId1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long miembroId = new JSONObject(createResponse).getLong("id");
+
+        Miembro miembro = miembroRepository.findById(miembroId).orElseThrow();
+        assertEquals(1, miembro.getHistorialCargos().size());
+        HistorialCargo hc = miembro.getHistorialCargos().iterator().next();
+        assertNull(hc.getFechaFin());
+        assertEquals(cargoId1, miembro.getCargoId());
+
+        String bajaBody = new JSONObject()
+                .put("fechaBaja", "2026-06-05")
+                .toString();
+
+        mockMvc.perform(put("/api/miembros/" + miembroId + "/baja")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bajaBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fechaBaja").value("2026-06-05"))
+                .andExpect(jsonPath("$.cargo").isEmpty());
+
+        miembro = miembroRepository.findById(miembroId).orElseThrow();
+        assertNull(miembro.getCargoId());
+        assertEquals(1, miembro.getHistorialCargos().size());
+        HistorialCargo hcFinalized = miembro.getHistorialCargos().iterator().next();
+        assertEquals(LocalDate.of(2026, 6, 5), hcFinalized.getFechaFin());
+    }
+
+    @Test
+    public void testMiembroReactivacionRestauraCargo() throws Exception {
+        String body = new JSONObject()
+                .put("nombreRazonSocial", "Test Reactivacion Cargo")
+                .put("centroId", centroId)
+                .put("telefono", "123456789")
+                .put("correo", "reactivacion_cargo@test.com")
+                .put("cargoId", cargoId1)
+                .put("fechaCargo", "2026-06-01")
+                .toString();
+
+        String createResponse = mockMvc.perform(post("/api/miembros")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cargo.id").value(cargoId1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long miembroId = new JSONObject(createResponse).getLong("id");
+
+        // Put on baja
+        String bajaBody = new JSONObject()
+                .put("fechaBaja", "2026-06-05")
+                .toString();
+
+        mockMvc.perform(put("/api/miembros/" + miembroId + "/baja")
+                        .header("Authorization", authHeader)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bajaBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fechaBaja").value("2026-06-05"))
+                .andExpect(jsonPath("$.cargo").isEmpty());
+
+        // Revert baja (reactivate)
+        mockMvc.perform(delete("/api/miembros/" + miembroId + "/baja")
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fechaBaja").isEmpty())
+                .andExpect(jsonPath("$.cargo.id").value(cargoId1));
+
+        Miembro miembro = miembroRepository.findById(miembroId).orElseThrow();
+        assertEquals(cargoId1, miembro.getCargoId());
+        assertEquals(1, miembro.getHistorialCargos().size());
+        HistorialCargo hcRestored = miembro.getHistorialCargos().iterator().next();
+        assertNull(hcRestored.getFechaFin());
+    }
 }

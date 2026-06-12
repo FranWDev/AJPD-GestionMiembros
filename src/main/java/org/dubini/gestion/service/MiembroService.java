@@ -245,15 +245,25 @@ public class MiembroService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "miembros", allEntries = true),
-            @CacheEvict(value = "miembro", key = "#id")
+            @CacheEvict(value = "miembro", key = "#id"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto darDeBaja(Long id, Map<String, String> body) {
         LocalDate fechaBaja = null;
         if (body != null && body.containsKey("fechaBaja") && body.get("fechaBaja") != null && !body.get("fechaBaja").isEmpty()) {
             fechaBaja = LocalDate.parse(body.get("fechaBaja"));
         }
+        LocalDate finalFechaBaja = fechaBaja != null ? fechaBaja : LocalDate.now();
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
-        m.setFechaBaja(fechaBaja != null ? fechaBaja : LocalDate.now());
+        m.setFechaBaja(finalFechaBaja);
+
+        if (m.getHistorialCargos() != null) {
+            m.getHistorialCargos().stream()
+                    .filter(hc -> hc.getFechaFin() == null)
+                    .forEach(hc -> hc.setFechaFin(finalFechaBaja));
+        }
+        m.alignCurrentCargoWithHistory();
+
         m = miembroRepo.save(m);
         return getMiembroById(m.getId());
     }
@@ -261,11 +271,19 @@ public class MiembroService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "miembros", allEntries = true),
-            @CacheEvict(value = "miembro", key = "#id")
+            @CacheEvict(value = "miembro", key = "#id"),
+            @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto reactivarMiembro(Long id) {
         Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        LocalDate oldFechaBaja = m.getFechaBaja();
         m.setFechaBaja(null);
+        if (oldFechaBaja != null && m.getHistorialCargos() != null) {
+            m.getHistorialCargos().stream()
+                    .filter(hc -> oldFechaBaja.equals(hc.getFechaFin()))
+                    .forEach(hc -> hc.setFechaFin(null));
+        }
+        m.alignCurrentCargoWithHistory();
         m = miembroRepo.save(m);
         return getMiembroById(m.getId());
     }
