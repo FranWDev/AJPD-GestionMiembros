@@ -16,12 +16,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@ActiveProfiles("test")
 public class MiembroControllerIntegrationTest {
 
     @Autowired
@@ -294,36 +297,43 @@ public class MiembroControllerIntegrationTest {
         mockMvc.perform(get("/api/miembros?filtroBaja=ACTIVOS")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").doesNotExist())
                 .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
 
         mockMvc.perform(get("/api/miembros?filtroBaja=BAJAS")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").doesNotExist())
                 .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
 
         mockMvc.perform(get("/api/miembros")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(2));
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").exists())
+                .andExpect(jsonPath("$.content[2]").doesNotExist());
 
         mockMvc.perform(get("/api/miembros?centroId=" + centroId + "&cargoId=" + cargoId1)
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").doesNotExist())
                 .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
 
         mockMvc.perform(get("/api/miembros?nacionalidad=francesa")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").doesNotExist())
                 .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Zinedine Zidane"));
 
         mockMvc.perform(get("/api/miembros?fechaAltaDesde=2026-06-01&fechaAltaHasta=2026-06-01")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0]").exists())
+                .andExpect(jsonPath("$.content[1]").doesNotExist())
                 .andExpect(jsonPath("$.content[0].nombreRazonSocial").value("Andres Iniesta"));
 
         mockMvc.perform(get("/api/miembros?buscar=iniesta")
