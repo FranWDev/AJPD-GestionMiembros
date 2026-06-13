@@ -8,7 +8,12 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AppHintsRegistrar implements RuntimeHintsRegistrar {
+
+    private static final Logger log = LoggerFactory.getLogger(AppHintsRegistrar.class);
 
     @Override
     public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
@@ -50,6 +55,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.dubini.gestion.validation.NifCifValidator");
         registerClassIfExists(hints, "org.dubini.gestion.dto.CargoHistorialDto");
         registerClassIfExists(hints, "org.dubini.gestion.dto.CargoHistorialEditDto");
+        registerClassIfExists(hints, "org.dubini.gestion.dto.MiembroFiltro");
 
         registerClassIfExists(hints, "org.springdoc.core.configuration.SpringDocConfiguration");
         registerClassIfExists(hints, "org.springdoc.core.properties.SpringDocConfigProperties");
@@ -72,7 +78,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
                 hints.serialization().registerType((Class<? extends Serializable>) clazz);
             }
         } catch (ClassNotFoundException e) {
-            System.err.println("Entity not found for hints: " + className);
+            log.warn("Entity not found for hints: {}", className, e);
         }
     }
 
@@ -84,7 +90,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
                     MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
                     MemberCategory.DECLARED_FIELDS);
         } catch (ClassNotFoundException e) {
-            System.err.println("Exception not found for hints: " + className);
+            log.warn("Exception not found for hints: {}", className, e);
         }
     }
 
@@ -100,7 +106,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
             registerClassIfExists(hints, "org.dubini.gestion.security.JwtFilter");
             registerClassIfExists(hints, "org.dubini.gestion.security.JwtProvider");
         } catch (Exception e) {
-            System.err.println("Security hints error: " + e.getMessage());
+            log.warn("Security hints error: {}", e.getMessage(), e);
         }
     }
 
@@ -111,14 +117,14 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
             Class<?> jsonNodeClass = Class.forName("com.fasterxml.jackson.databind.JsonNode");
             hints.reflection().registerType(jsonNodeClass, MemberCategory.values());
         } catch (Exception e) {
-            System.err.println("Jackson hints error: " + e.getMessage());
+            log.warn("Jackson hints error: {}", e.getMessage(), e);
         }
     }
 
     private void registerPostgresClasses(RuntimeHints hints) {
         try {
             hints.reflection().registerType(
-                    Class.forName("org.postgresql.Driver"),
+                    org.springframework.aot.hint.TypeReference.of("org.postgresql.Driver"),
                     MemberCategory.values());
             hints.reflection().registerType(
                     Class.forName("org.postgresql.util.PGobject"),
@@ -132,7 +138,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
             registerClassIfExists(hints, "org.springframework.data.convert.WritingConverter");
             registerClassIfExists(hints, "org.springframework.core.convert.converter.Converter");
         } catch (ClassNotFoundException e) {
-            System.err.println("PostgreSQL hints error: " + e.getMessage());
+            log.warn("PostgreSQL hints error: {}", e.getMessage(), e);
         }
     }
 
@@ -141,6 +147,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
             Class<?> clazz = Class.forName(className);
             hints.reflection().registerType(clazz, MemberCategory.values());
         } catch (ClassNotFoundException e) {
+            // Class is optional or not present on the classpath, ignore registering hints
         }
     }
 }

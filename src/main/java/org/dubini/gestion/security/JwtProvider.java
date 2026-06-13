@@ -7,11 +7,16 @@ import org.dubini.gestion.config.JwtProperties;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class JwtProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtProvider.class);
 
     private final SecretKey key;
     private final long jwtExpirationMs;
@@ -29,10 +34,11 @@ public class JwtProvider {
     }
 
     public String generateToken() {
+        Instant now = Instant.now();
         return Jwts.builder()
                 .subject("backoffice")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(jwtExpirationMs)))
                 .signWith(key)
                 .compact();
     }
@@ -47,17 +53,17 @@ public class JwtProvider {
 
             String subject = claims.getSubject();
             Date expiration = claims.getExpiration();
-            Date now = new Date();
+            Instant now = Instant.now();
 
-            return "backoffice".equals(subject) && expiration.after(now);
+            return "backoffice".equals(subject) && expiration != null && expiration.toInstant().isAfter(now);
         } catch (ExpiredJwtException e) {
-            System.err.println("ERROR: Token expired: " + e.getMessage());
+            log.error("ERROR: Token expired: {}", e.getMessage(), e);
             return false;
         } catch (MalformedJwtException e) {
-            System.err.println("ERROR: Malformed JWT token: " + e.getMessage());
+            log.error("ERROR: Malformed JWT token: {}", e.getMessage(), e);
             return false;
         } catch (Exception e) {
-            System.err.println("ERROR: Token validation failed: " + e.getMessage());
+            log.error("ERROR: Token validation failed: {}", e.getMessage(), e);
             return false;
         }
     }

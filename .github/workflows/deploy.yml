@@ -1,17 +1,15 @@
-name: Production Release Pipeline (Scan, Build & Deploy)
+name: Production Release Pipeline (Build & Deploy)
 
 on:
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
-    name: Scan, Test & Build Native Application
+    name: Test, Build & Deploy Native Application
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -21,16 +19,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
           cache: 'maven'
-
-      - name: Run SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          mvn clean compile org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=AJPD-GestionMiembros \
-            -Dsonar.projectName="AJPD-GestionMiembros" \
-            -Dsonar.qualitygate.wait=true
 
       - name: Install UPX
         run: |

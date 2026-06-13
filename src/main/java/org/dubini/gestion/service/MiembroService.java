@@ -16,14 +16,20 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 public class MiembroService {
+
+    private static final String MIEMBRO_NO_ENCONTRADO = "Miembro no encontrado";
+    private static final String FECHA_BAJA = "fechaBaja";
 
     private final MiembroRepository miembroRepo;
     private final CentroRepository centroRepo;
@@ -38,24 +44,10 @@ public class MiembroService {
     @Transactional(readOnly = true)
     @Cacheable(value = "miembros")
     public Page<MiembroResponseDto> getMiembros(
-            String filtroBaja,
-            Long centroId,
-            Long cargoId,
-            LocalDate fechaAltaDesde,
-            LocalDate fechaAltaHasta,
-            LocalDate fechaBajaDesde,
-            LocalDate fechaBajaHasta,
-            String nacionalidad,
-            String buscar,
+            MiembroFiltro filtro,
             Pageable pageable
     ) {
-        Page<Miembro> pg = miembroRepo.findByFilters(
-                filtroBaja, centroId, cargoId,
-                fechaAltaDesde, fechaAltaHasta,
-                fechaBajaDesde, fechaBajaHasta,
-                nacionalidad, buscar,
-                pageable
-        );
+        Page<Miembro> pg = miembroRepo.findByFilters(filtro, pageable);
         List<Miembro> members = pg.getContent();
 
         if (members.isEmpty()) {
@@ -99,7 +91,11 @@ public class MiembroService {
     @Transactional(readOnly = true)
     @Cacheable(value = "miembro", key = "#id")
     public MiembroResponseDto getMiembroById(Long id) {
-        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        return getMiembroResponseDtoById(id);
+    }
+
+    private MiembroResponseDto getMiembroResponseDtoById(Long id) {
+        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         Map<Long, Centro> centroMap = new HashMap<>();
         if (m.getCentroId() != null) {
             centroRepo.findById(m.getCentroId()).ifPresent(c -> centroMap.put(c.getId(), c));
@@ -126,8 +122,8 @@ public class MiembroService {
     public MiembroResponseDto createMiembro(MiembroRequestDto dto) {
         Miembro m = new Miembro();
         DtoMapper.updateEntity(m, dto);
-        m.setFechaCargo(dto.getFechaCargo() != null ? dto.getFechaCargo() : LocalDate.now());
-        m.setFechaAlta(dto.getFechaAlta() != null ? dto.getFechaAlta() : LocalDate.now());
+        m.setFechaCargo(dto.getFechaCargo() != null ? dto.getFechaCargo() : LocalDate.now(ZoneId.systemDefault()));
+        m.setFechaAlta(dto.getFechaAlta() != null ? dto.getFechaAlta() : LocalDate.now(ZoneId.systemDefault()));
 
         if (dto.getCargoId() != null) {
             HistorialCargo hc = new HistorialCargo(null, m.getFechaCargo(), null, dto.getCargoId());
@@ -137,7 +133,7 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 
     @Transactional
@@ -147,7 +143,7 @@ public class MiembroService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto updateMiembro(Long id, MiembroRequestDto dto) {
-        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         
         Long oldCargoId = m.getCargoId();
         Long newCargoId = dto.getCargoId();
@@ -155,7 +151,7 @@ public class MiembroService {
         DtoMapper.updateEntity(m, dto);
 
         if (!Objects.equals(oldCargoId, newCargoId)) {
-            LocalDate changeDate = dto.getFechaCargo() != null ? dto.getFechaCargo() : LocalDate.now();
+            LocalDate changeDate = dto.getFechaCargo() != null ? dto.getFechaCargo() : LocalDate.now(ZoneId.systemDefault());
             m.setFechaCargo(changeDate);
 
             if (oldCargoId != null) {
@@ -173,7 +169,7 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 
     @Transactional
@@ -183,7 +179,7 @@ public class MiembroService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto updateHistorialCargo(Long miembroId, Long historialId, HistorialCargoDto dto) {
-        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         HistorialCargo hc = m.getHistorialCargos().stream()
                 .filter(h -> Objects.equals(h.getId(), historialId))
                 .findFirst()
@@ -198,7 +194,7 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 
     @Transactional
@@ -208,7 +204,7 @@ public class MiembroService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto deleteHistorialCargo(Long miembroId, Long historialId) {
-        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        Miembro m = miembroRepo.findById(miembroId).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         HistorialCargo toDelete = m.getHistorialCargos().stream()
                 .filter(h -> Objects.equals(h.getId(), historialId))
                 .findFirst()
@@ -228,7 +224,7 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 
     @Transactional
@@ -238,7 +234,7 @@ public class MiembroService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public void deleteMiembro(Long id) {
-        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         miembroRepo.delete(m);
     }
 
@@ -250,11 +246,11 @@ public class MiembroService {
     })
     public MiembroResponseDto darDeBaja(Long id, Map<String, String> body) {
         LocalDate fechaBaja = null;
-        if (body != null && body.containsKey("fechaBaja") && body.get("fechaBaja") != null && !body.get("fechaBaja").isEmpty()) {
-            fechaBaja = LocalDate.parse(body.get("fechaBaja"));
+        if (body != null && body.containsKey(FECHA_BAJA) && body.get(FECHA_BAJA) != null && !body.get(FECHA_BAJA).isEmpty()) {
+            fechaBaja = LocalDate.parse(body.get(FECHA_BAJA));
         }
-        LocalDate finalFechaBaja = fechaBaja != null ? fechaBaja : LocalDate.now();
-        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        LocalDate finalFechaBaja = fechaBaja != null ? fechaBaja : LocalDate.now(ZoneId.systemDefault());
+        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         m.setFechaBaja(finalFechaBaja);
 
         if (m.getHistorialCargos() != null) {
@@ -265,7 +261,7 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 
     @Transactional
@@ -275,7 +271,7 @@ public class MiembroService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public MiembroResponseDto reactivarMiembro(Long id) {
-        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Miembro no encontrado"));
+        Miembro m = miembroRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(MIEMBRO_NO_ENCONTRADO));
         LocalDate oldFechaBaja = m.getFechaBaja();
         m.setFechaBaja(null);
         if (oldFechaBaja != null && m.getHistorialCargos() != null) {
@@ -285,6 +281,6 @@ public class MiembroService {
         }
         m.alignCurrentCargoWithHistory();
         m = miembroRepo.save(m);
-        return getMiembroById(m.getId());
+        return getMiembroResponseDtoById(m.getId());
     }
 }

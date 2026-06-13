@@ -5,17 +5,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 
+import org.dubini.gestion.dto.MiembroFiltro;
+
 public interface MiembroRepositoryCustom {
     Page<Miembro> findByFilters(
-            String filtroBaja,
-            Long centroId,
-            Long cargoId,
-            LocalDate fechaAltaDesde,
-            LocalDate fechaAltaHasta,
-            LocalDate fechaBajaDesde,
-            LocalDate fechaBajaHasta,
-            String nacionalidad,
-            String buscar,
+            MiembroFiltro filtro,
             Pageable pageable
     );
 }

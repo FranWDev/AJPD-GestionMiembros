@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class MiembroControllerIntegrationTest {
+class MiembroControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -58,7 +59,7 @@ public class MiembroControllerIntegrationTest {
     private Long cargoId2;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         accessKeyProperties.setAccessKey(passwordEncoder.encode("testkey"));
 
         String loginBody = new JSONObject()
@@ -86,7 +87,7 @@ public class MiembroControllerIntegrationTest {
     }
 
     @Test
-    public void testFullMiembroFlowAndCargoHistory() throws Exception {
+    void testFullMiembroFlowAndCargoHistory() throws Exception {
         mockMvc.perform(get("/api/miembros")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk());
@@ -97,7 +98,7 @@ public class MiembroControllerIntegrationTest {
                 .put("telefono", "987654321")
                 .put("correo", "pedro@test.com")
                 .put("cargoId", cargoId1)
-                .put("fechaCargo", LocalDate.now().toString())
+                .put("fechaCargo", LocalDate.now(ZoneId.systemDefault()).toString())
                 .put("enlaceWhatsapp", "wlink")
                 .toString();
 
@@ -127,7 +128,7 @@ public class MiembroControllerIntegrationTest {
                 .put("telefono", "987654321")
                 .put("correo", "pedro@test.com")
                 .put("cargoId", cargoId2)
-                .put("fechaCargo", LocalDate.now().toString())
+                .put("fechaCargo", LocalDate.now(ZoneId.systemDefault()).toString())
                 .put("enlaceWhatsapp", "wlink")
                 .toString();
 
@@ -153,8 +154,8 @@ public class MiembroControllerIntegrationTest {
 
         Long historyId = newHc.getId();
         String updateHistoryBody = new JSONObject()
-                .put("fechaInicio", LocalDate.now().minusDays(1).toString())
-                .put("fechaFin", LocalDate.now().plusDays(5).toString())
+                .put("fechaInicio", LocalDate.now(ZoneId.systemDefault()).minusDays(1).toString())
+                .put("fechaFin", LocalDate.now(ZoneId.systemDefault()).plusDays(5).toString())
                 .put("cargo", new JSONObject().put("id", cargoId1))
                 .toString();
 
@@ -168,8 +169,8 @@ public class MiembroControllerIntegrationTest {
         HistorialCargo updatedHc = createdEntity.getHistorialCargos().stream()
                 .filter(h -> h.getId().equals(historyId))
                 .findFirst().orElseThrow();
-        assertEquals(LocalDate.now().minusDays(1), updatedHc.getFechaInicio());
-        assertEquals(LocalDate.now().plusDays(5), updatedHc.getFechaFin());
+        assertEquals(LocalDate.now(ZoneId.systemDefault()).minusDays(1), updatedHc.getFechaInicio());
+        assertEquals(LocalDate.now(ZoneId.systemDefault()).plusDays(5), updatedHc.getFechaFin());
         assertEquals(cargoId1, updatedHc.getCargoId());
 
         mockMvc.perform(delete("/api/miembros/" + miembroId + "/historial/" + historyId)
@@ -190,7 +191,7 @@ public class MiembroControllerIntegrationTest {
     }
 
     @Test
-    public void testMiembroNuevosCamposYBajaReactivacion() throws Exception {
+    void testMiembroNuevosCamposYBajaReactivacion() throws Exception {
         String body = new JSONObject()
                 .put("nombreRazonSocial", "Juan Perez")
                 .put("centroId", centroId)
@@ -240,7 +241,7 @@ public class MiembroControllerIntegrationTest {
     }
 
     @Test
-    public void testMiembroValidationAndFilters() throws Exception {
+    void testMiembroValidationAndFilters() throws Exception {
         String invalidNameBody = new JSONObject()
                 .put("nombreRazonSocial", "   ")
                 .put("centroId", centroId)
@@ -276,7 +277,7 @@ public class MiembroControllerIntegrationTest {
         m1.setTelefono("666111222");
         m1.setCorreo("andres@iniesta.com");
         m1.setFechaAlta(LocalDate.of(2026, 6, 1));
-        m1.setFechaCargo(LocalDate.now());
+        m1.setFechaCargo(LocalDate.now(ZoneId.systemDefault()));
         m1.setHistorialCargos(new HashSet<>());
         miembroRepository.save(m1);
 
@@ -290,7 +291,7 @@ public class MiembroControllerIntegrationTest {
         m2.setCorreo("zizou@zidane.com");
         m2.setFechaAlta(LocalDate.of(2026, 6, 2));
         m2.setFechaBaja(LocalDate.of(2026, 6, 8));
-        m2.setFechaCargo(LocalDate.now());
+        m2.setFechaCargo(LocalDate.now(ZoneId.systemDefault()));
         m2.setHistorialCargos(new HashSet<>());
         miembroRepository.save(m2);
 
@@ -368,7 +369,7 @@ public class MiembroControllerIntegrationTest {
      }
 
     @Test
-    public void testDeleteRecentCargoHistoryRestoresPreviousCargo() throws Exception {
+    void testDeleteRecentCargoHistoryRestoresPreviousCargo() throws Exception {
 
         String createMiembroBody = new JSONObject()
                 .put("nombreRazonSocial", "Test Restores Cargo")
@@ -376,7 +377,7 @@ public class MiembroControllerIntegrationTest {
                 .put("telefono", "123123123")
                 .put("correo", "testrestore@test.com")
                 .put("cargoId", cargoId1)
-                .put("fechaCargo", LocalDate.now().toString())
+                .put("fechaCargo", LocalDate.now(ZoneId.systemDefault()).toString())
                 .put("enlaceWhatsapp", "wlink")
                 .toString();
 
@@ -398,7 +399,7 @@ public class MiembroControllerIntegrationTest {
                 .put("telefono", "123123123")
                 .put("correo", "testrestore@test.com")
                 .put("cargoId", cargoId2)
-                .put("fechaCargo", LocalDate.now().toString())
+                .put("fechaCargo", LocalDate.now(ZoneId.systemDefault()).toString())
                 .put("enlaceWhatsapp", "wlink")
                 .toString();
 
@@ -432,7 +433,7 @@ public class MiembroControllerIntegrationTest {
     }
 
     @Test
-    public void testMiembroBajaFinalizaCargo() throws Exception {
+    void testMiembroBajaFinalizaCargo() throws Exception {
         String body = new JSONObject()
                 .put("nombreRazonSocial", "Test Baja Cargo")
                 .put("centroId", centroId)
@@ -480,7 +481,7 @@ public class MiembroControllerIntegrationTest {
     }
 
     @Test
-    public void testMiembroReactivacionRestauraCargo() throws Exception {
+    void testMiembroReactivacionRestauraCargo() throws Exception {
         String body = new JSONObject()
                 .put("nombreRazonSocial", "Test Reactivacion Cargo")
                 .put("centroId", centroId)

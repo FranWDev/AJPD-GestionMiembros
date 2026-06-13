@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-public class CargoRepositoryIntegrationTest {
+class CargoRepositoryIntegrationTest {
 
     @Autowired
     private CargoRepository cargoRepository;
 
     @Test
-    public void testSaveAndFindCargo() {
+    void testSaveAndFindCargo() {
         Cargo cargo = new Cargo(null, "Presidente Test");
         Cargo saved = cargoRepository.save(cargo);
 

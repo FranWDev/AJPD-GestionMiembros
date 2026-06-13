@@ -23,37 +23,49 @@ public class NifCifValidator implements ConstraintValidator<ValidNifCif, String>
 
         // DNI: 8 dígitos + 1 letra
         if (Character.isDigit(first)) {
-            if (!clean.substring(0, 8).matches("\\d{8}") || !Character.isLetter(last)) {
-                return false;
-            }
-            return validateDniNieLetter(clean.substring(0, 8), last);
+            return validateDni(clean, last);
         }
 
         // NIE: X/Y/Z + 7 dígitos + 1 letra
         if (first == 'X' || first == 'Y' || first == 'Z') {
-            if (!clean.substring(1, 8).matches("\\d{7}") || !Character.isLetter(last)) {
-                return false;
-            }
-            String prefix = "";
-            if (first == 'X') {
-                prefix = "0";
-            } else if (first == 'Y') {
-                prefix = "1";
-            } else if (first == 'Z') {
-                prefix = "2";
-            }
-            return validateDniNieLetter(prefix + clean.substring(1, 8), last);
+            return validateNie(first, clean, last);
         }
 
         // CIF / NIF Corporativo: Letra + 7 dígitos + dígito/letra de control
         if ("ABCDEFGHJNPQRSTUVW".indexOf(first) != -1) {
-            if (!clean.substring(1, 8).matches("\\d{7}")) {
-                return false;
-            }
-            return validateCif(clean);
+            return validateCifFormat(clean);
         }
 
         return false;
+    }
+
+    private boolean validateDni(String clean, char last) {
+        if (!clean.substring(0, 8).matches("\\d{8}") || !Character.isLetter(last)) {
+            return false;
+        }
+        return validateDniNieLetter(clean.substring(0, 8), last);
+    }
+
+    private boolean validateNie(char first, String clean, char last) {
+        if (!clean.substring(1, 8).matches("\\d{7}") || !Character.isLetter(last)) {
+            return false;
+        }
+        String prefix = "";
+        if (first == 'X') {
+            prefix = "0";
+        } else if (first == 'Y') {
+            prefix = "1";
+        } else if (first == 'Z') {
+            prefix = "2";
+        }
+        return validateDniNieLetter(prefix + clean.substring(1, 8), last);
+    }
+
+    private boolean validateCifFormat(String clean) {
+        if (!clean.substring(1, 8).matches("\\d{7}")) {
+            return false;
+        }
+        return validateCif(clean);
     }
 
     private boolean validateDniNieLetter(String numbers, char letter) {

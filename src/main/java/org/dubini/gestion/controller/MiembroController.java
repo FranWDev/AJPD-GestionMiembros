@@ -3,6 +3,7 @@ package org.dubini.gestion.controller;
 import java.time.LocalDate;
 import java.util.Map;
 
+import org.dubini.gestion.dto.MiembroFiltro;
 import org.dubini.gestion.dto.HistorialCargoDto;
 import org.dubini.gestion.dto.MiembroRequestDto;
 import org.dubini.gestion.dto.MiembroResponseDto;
@@ -52,13 +53,13 @@ public class MiembroController {
             @Parameter(description = "Búsqueda textual (nombre, correo, NIF...)") @RequestParam(required = false) String buscar,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(service.getMiembros(
+        MiembroFiltro filtro = new MiembroFiltro(
                 filtroBaja, centroId, cargoId,
                 fechaAltaDesde, fechaAltaHasta,
                 fechaBajaDesde, fechaBajaHasta,
-                nacionalidad, buscar,
-                pageable
-        ));
+                nacionalidad, buscar
+        );
+        return ResponseEntity.ok(service.getMiembros(filtro, pageable));
     }
 
     @Operation(summary = "Obtener miembro por ID")

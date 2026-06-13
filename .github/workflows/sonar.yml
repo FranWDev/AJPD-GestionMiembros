@@ -1,0 +1,32 @@
+name: SonarQube Code Analysis
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sonar-scan:
+    name: Run SonarQube Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn clean compile org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=AJPD-GestionMiembros \
+            -Dsonar.projectName="AJPD-GestionMiembros" \
+            -Dsonar.organization="${{ secrets.SONAR_ORGANIZATION || 'asociacion-juvenil-proyecto-dubini' }}" \
+            -Dsonar.qualitygate.wait=true

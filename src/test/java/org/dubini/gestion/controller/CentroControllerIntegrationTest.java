@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -27,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class CentroControllerIntegrationTest {
+class CentroControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -47,7 +48,7 @@ public class CentroControllerIntegrationTest {
     private String authHeader;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         accessKeyProperties.setAccessKey(passwordEncoder.encode("testkey"));
 
         String loginBody = new JSONObject()
@@ -66,7 +67,7 @@ public class CentroControllerIntegrationTest {
     }
 
     @Test
-    public void testFullCentroFlow() throws Exception {
+    void testFullCentroFlow() throws Exception {
         mockMvc.perform(get("/api/centros")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk());
@@ -115,14 +116,14 @@ public class CentroControllerIntegrationTest {
     }
 
     @Test
-    public void testDeleteCentro_AssignedToMember() throws Exception {
+    void testDeleteCentro_AssignedToMember() throws Exception {
         Centro centro = centroRepository.save(new Centro(null, "Centro Ocupado"));
         Miembro miembro = new Miembro();
         miembro.setNombreRazonSocial("Juan");
         miembro.setCentroId(centro.getId());
         miembro.setTelefono("123");
         miembro.setCorreo("juan@test.com");
-        miembro.setFechaCargo(LocalDate.now());
+        miembro.setFechaCargo(LocalDate.now(ZoneId.systemDefault()));
         miembro.setEnlaceWhatsapp("link");
         miembro.setHistorialCargos(new HashSet<>());
         miembroRepository.save(miembro);
@@ -134,8 +135,8 @@ public class CentroControllerIntegrationTest {
     }
 
     @Test
-    public void testGetCentrosWithNameFilter() throws Exception {
-        Centro c1 = centroRepository.save(new Centro(null, "Madrid Norte"));
+    void testGetCentrosWithNameFilter() throws Exception {
+        centroRepository.save(new Centro(null, "Madrid Norte"));
         centroRepository.save(new Centro(null, "Barcelona Sur"));
 
         mockMvc.perform(get("/api/centros?nombre=Madrid")

@@ -98,6 +98,7 @@ public class JwtHintsRegistrar implements RuntimeHintsRegistrar {
             Class<?> clazz = Class.forName(className);
             hints.reflection().registerType(clazz, MemberCategory.values());
         } catch (ClassNotFoundException e) {
+            // Class is optional or not present on classpath, ignore registering hints
         }
     }
 }

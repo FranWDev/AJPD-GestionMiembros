@@ -11,6 +11,10 @@ import java.util.stream.Collectors;
 
 public class DtoMapper {
 
+    private DtoMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static CentroDto toDto(Centro c) {
         if (c == null) return null;
         return new CentroDto(c.getId(), c.getNombre());

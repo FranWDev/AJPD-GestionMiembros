@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class CargoControllerIntegrationTest {
+class CargoControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,7 +56,7 @@ public class CargoControllerIntegrationTest {
     private String authHeader;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         accessKeyProperties.setAccessKey(passwordEncoder.encode("testkey"));
 
         String loginBody = new JSONObject()
@@ -74,7 +75,7 @@ public class CargoControllerIntegrationTest {
     }
 
     @Test
-    public void testFullCargoFlow() throws Exception {
+    void testFullCargoFlow() throws Exception {
         mockMvc.perform(get("/api/cargos")
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk());
@@ -123,7 +124,7 @@ public class CargoControllerIntegrationTest {
     }
 
     @Test
-    public void testDeleteCargo_AssignedToMember() throws Exception {
+    void testDeleteCargo_AssignedToMember() throws Exception {
         Cargo cargo = cargoRepository.save(new Cargo(null, "Cargo Ocupado"));
         Centro centro = centroRepository.save(new Centro(null, "Centro Test"));
         Miembro miembro = new Miembro();
@@ -132,7 +133,7 @@ public class CargoControllerIntegrationTest {
         miembro.setTelefono("123");
         miembro.setCorreo("juan@test.com");
         miembro.setCargoId(cargo.getId());
-        miembro.setFechaCargo(LocalDate.now());
+        miembro.setFechaCargo(LocalDate.now(ZoneId.systemDefault()));
         miembro.setEnlaceWhatsapp("link");
         miembro.setHistorialCargos(new HashSet<>());
         miembroRepository.save(miembro);
@@ -144,8 +145,8 @@ public class CargoControllerIntegrationTest {
     }
 
     @Test
-    public void testGetCargosWithNameFilter() throws Exception {
-        Cargo c1 = cargoRepository.save(new Cargo(null, "Secretario Ejecutivo"));
+    void testGetCargosWithNameFilter() throws Exception {
+        cargoRepository.save(new Cargo(null, "Secretario Ejecutivo"));
         cargoRepository.save(new Cargo(null, "Vocal de Distrito"));
 
         mockMvc.perform(get("/api/cargos?nombre=Secretario")
@@ -171,7 +172,7 @@ public class CargoControllerIntegrationTest {
     }
 
     @Test
-    public void testCargoHistorialFlows() throws Exception {
+    void testCargoHistorialFlows() throws Exception {
         Centro centro = centroRepository.save(new Centro(null, "Centro Historial"));
         Cargo cargo = cargoRepository.save(new Cargo(null, "Vocal Especial"));
         
@@ -236,7 +237,7 @@ public class CargoControllerIntegrationTest {
     }
 
     @Test
-    public void testHistorialCargoAutoClosureAndAlignment() throws Exception {
+    void testHistorialCargoAutoClosureAndAlignment() throws Exception {
         Centro centro = centroRepository.save(new Centro(null, "Centro Auto Closure"));
         Cargo cargoPresidente = cargoRepository.save(new Cargo(null, "Presidente"));
         Cargo cargoSecretario = cargoRepository.save(new Cargo(null, "Secretario"));

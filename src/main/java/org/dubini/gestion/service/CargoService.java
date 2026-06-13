@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CargoService {
 
+    private static final String CARGO_NO_ENCONTRADO = "Cargo no encontrado";
+
     private final CargoRepository repo;
     private final HistorialCargoRepository historialRepo;
     private final MiembroRepository miembroRepo;
@@ -49,7 +51,7 @@ public class CargoService {
 
     @Cacheable(value = "cargo", key = "#id")
     public CargoDto getCargoById(Long id) {
-        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
+        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CARGO_NO_ENCONTRADO));
         return DtoMapper.toDto(c);
     }
 
@@ -70,7 +72,7 @@ public class CargoService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public CargoDto updateCargo(Long id, CargoDto dto) {
-        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
+        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CARGO_NO_ENCONTRADO));
         c.setNombre(dto.getNombre());
         c = repo.save(c);
         return DtoMapper.toDto(c);
@@ -85,7 +87,7 @@ public class CargoService {
             @CacheEvict(value = "cargoHistorial", allEntries = true)
     })
     public void deleteCargo(Long id) {
-        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
+        Cargo c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CARGO_NO_ENCONTRADO));
         if (repo.countMiembrosByCargoId(id) > 0) {
             throw new BusinessRuleException("No se puede eliminar el cargo porque está asignado a uno o más miembros");
         }
@@ -143,7 +145,7 @@ public class CargoService {
         m = miembroRepo.save(m);
 
         Cargo cargo = repo.findById(dto.getCargoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cargo no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARGO_NO_ENCONTRADO));
 
         CargoHistorialDto result = new CargoHistorialDto();
         result.setId(hc.getId());

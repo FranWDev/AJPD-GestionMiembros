@@ -50,7 +50,7 @@ public class Miembro {
         List<HistorialCargo> activeEntries = this.historialCargos.stream()
                 .filter(h -> h.getFechaFin() == null)
                 .sorted((h1, h2) -> h2.getFechaInicio().compareTo(h1.getFechaInicio()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (!activeEntries.isEmpty()) {
             HistorialCargo active = activeEntries.get(0);

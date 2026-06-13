@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CentroService {
 
+    private static final String CENTRO_NO_ENCONTRADO = "Centro no encontrado";
+
     private final CentroRepository repo;
 
     public CentroService(CentroRepository repo) {
@@ -34,7 +36,7 @@ public class CentroService {
 
     @Cacheable(value = "centro", key = "#id")
     public CentroDto getCentroById(Long id) {
-        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
+        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CENTRO_NO_ENCONTRADO));
         return DtoMapper.toDto(c);
     }
 
@@ -54,7 +56,7 @@ public class CentroService {
             @CacheEvict(value = "miembro", allEntries = true)
     })
     public CentroDto updateCentro(Long id, CentroDto dto) {
-        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
+        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CENTRO_NO_ENCONTRADO));
         c.setNombre(dto.getNombre());
         c = repo.save(c);
         return DtoMapper.toDto(c);
@@ -68,7 +70,7 @@ public class CentroService {
             @CacheEvict(value = "miembro", allEntries = true)
     })
     public void deleteCentro(Long id) {
-        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Centro no encontrado"));
+        Centro c = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException(CENTRO_NO_ENCONTRADO));
         if (repo.countMiembrosByCentroId(id) > 0) {
             throw new BusinessRuleException("No se puede eliminar el centro porque está asignado a uno o más miembros");
         }
