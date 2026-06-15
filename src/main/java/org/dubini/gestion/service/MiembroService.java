@@ -28,17 +28,20 @@ import java.util.stream.Stream;
 @Service
 public class MiembroService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MiembroService.class);
     private static final String MIEMBRO_NO_ENCONTRADO = "Miembro no encontrado";
     private static final String FECHA_BAJA = "fechaBaja";
 
     private final MiembroRepository miembroRepo;
     private final CentroRepository centroRepo;
     private final CargoRepository cargoRepo;
+    private final GoogleDriveService googleDriveService;
 
-    public MiembroService(MiembroRepository miembroRepo, CentroRepository centroRepo, CargoRepository cargoRepo) {
+    public MiembroService(MiembroRepository miembroRepo, CentroRepository centroRepo, CargoRepository cargoRepo, GoogleDriveService googleDriveService) {
         this.miembroRepo = miembroRepo;
         this.centroRepo = centroRepo;
         this.cargoRepo = cargoRepo;
+        this.googleDriveService = googleDriveService;
     }
 
     @Transactional(readOnly = true)
@@ -133,6 +136,17 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
 
         m = miembroRepo.save(m);
+
+        // Create Google Drive folder structure for the new member
+        try {
+            googleDriveService.createMemberFolders(m.getId());
+        } catch (Exception e) {
+            log.error("Failed to create Google Drive folders for member: {}", m.getId(), e);
+            // We do not roll back the member creation database transaction if Drive fails,
+            // to keep the app working even if there are transient cloud issues,
+            // but folders can be created on-demand later.
+        }
+
         return getMiembroResponseDtoById(m.getId());
     }
 
@@ -282,5 +296,17 @@ public class MiembroService {
         m.alignCurrentCargoWithHistory();
         m = miembroRepo.save(m);
         return getMiembroResponseDtoById(m.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public void syncAllMembersFolders() {
+        List<Miembro> miembros = miembroRepo.findAll();
+        for (Miembro m : miembros) {
+            try {
+                googleDriveService.createMemberFolders(m.getId());
+            } catch (Exception e) {
+                log.error("Error creating/syncing folders for member ID {}", m.getId(), e);
+            }
+        }
     }
 }

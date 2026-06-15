@@ -6,6 +6,7 @@ import org.dubini.gestion.dto.response.ImageResponseDTO;
 import org.dubini.gestion.service.SliderImageService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class SliderImageController {
 
     @Operation(summary = "Actualizar una imagen de slide específica")
     @PutMapping(value = "/{slideName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<ImageResponseDTO> updateSliderImage(
             @PathVariable String slideName,
             @RequestParam("image") MultipartFile file) throws IOException {
@@ -39,6 +41,7 @@ public class SliderImageController {
 
     @Operation(summary = "Actualizar el caption (pie de foto) de un slide")
     @PutMapping("/{slideName}/caption")
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<SliderCaptionUpdateResponse> updateSliderCaption(
             @PathVariable String slideName,
             @RequestBody SliderCaptionRequest request) throws IOException {
@@ -70,6 +73,7 @@ public class SliderImageController {
 
     @Operation(summary = "Eliminar una imagen de slide")
     @DeleteMapping("/{slideName}")
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<Void> deleteSliderImage(@PathVariable String slideName) throws IOException {
         sliderImageService.deleteSliderImage(slideName);
         return ResponseEntity.noContent().build();

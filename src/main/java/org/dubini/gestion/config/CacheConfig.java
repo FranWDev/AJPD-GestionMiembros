@@ -25,7 +25,8 @@ public class CacheConfig {
                 "cargoHistorial",
                 "news",
                 "newsList",
-                "newsPage"
+                "newsPage",
+                "userPermissions"
         ));
         return cacheManager;
     }

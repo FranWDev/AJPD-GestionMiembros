@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.dubini.gestion.dto.PublicationDTO;
 import org.dubini.gestion.service.NewsService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -43,12 +44,14 @@ public class NewsController {
 
     @Operation(summary = "Crear o actualizar noticia")
     @PostMapping
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<PublicationDTO> create(@Valid @RequestBody PublicationDTO publicationDTO) {
         return ResponseEntity.ok(service.save(publicationDTO));
     }
 
     @Operation(summary = "Eliminar noticia por identificador")
     @DeleteMapping("/{identifier}")
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<Void> delete(@PathVariable String identifier) {
         service.delete(identifier);
         return ResponseEntity.noContent().build();

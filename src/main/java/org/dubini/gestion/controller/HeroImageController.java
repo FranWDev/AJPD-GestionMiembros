@@ -6,6 +6,7 @@ import org.dubini.gestion.dto.response.ImageResponseDTO;
 import org.dubini.gestion.service.HeroImageService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class HeroImageController {
 
     @Operation(summary = "Actualizar una imagen hero específica")
     @PutMapping(value = "/{heroName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<ImageResponseDTO> updateHeroImage(
             @PathVariable String heroName,
             @RequestParam("image") MultipartFile file) throws IOException {
@@ -47,6 +49,7 @@ public class HeroImageController {
 
     @Operation(summary = "Eliminar una imagen hero específica")
     @DeleteMapping("/{heroName}")
+    @PreAuthorize("@securityService.hasAccessToWeb()")
     public ResponseEntity<Void> deleteHeroImage(@PathVariable String heroName) throws IOException {
         heroImageService.deleteHeroImage(heroName);
         return ResponseEntity.noContent().build();

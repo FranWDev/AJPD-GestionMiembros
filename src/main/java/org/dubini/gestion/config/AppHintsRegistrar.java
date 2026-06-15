@@ -88,6 +88,20 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.dubini.gestion.controller.SliderImageController$SliderCaptionResponse");
         registerClassIfExists(hints, "org.dubini.gestion.controller.HeartbeatController");
 
+        // Google Drive and Permissions dynamic integration
+        registerEntity(hints, "org.dubini.gestion.model.UserPermission");
+        registerClassIfExists(hints, "org.dubini.gestion.repository.UserPermissionRepository");
+        registerClassIfExists(hints, "org.dubini.gestion.security.SecurityService");
+        registerClassIfExists(hints, "org.dubini.gestion.config.GoogleDriveConfig");
+        registerClassIfExists(hints, "org.dubini.gestion.service.GoogleDriveService");
+        registerClassIfExists(hints, "org.dubini.gestion.service.GoogleDriveService$DriveFileDto");
+        registerClassIfExists(hints, "org.dubini.gestion.controller.MiembroDocumentoController");
+
+        // Google SDK models
+        registerClassIfExists(hints, "com.google.api.services.drive.Drive");
+        registerClassIfExists(hints, "com.google.api.services.drive.model.File");
+        registerClassIfExists(hints, "com.google.api.services.drive.model.FileList");
+
         registerClassIfExists(hints, "org.springdoc.core.configuration.SpringDocConfiguration");
         registerClassIfExists(hints, "org.springdoc.core.properties.SpringDocConfigProperties");
         registerClassIfExists(hints, "org.springdoc.core.properties.SwaggerUiConfigProperties");

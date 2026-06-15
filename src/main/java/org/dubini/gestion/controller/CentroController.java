@@ -5,6 +5,7 @@ import org.dubini.gestion.service.CentroService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,12 +51,14 @@ public class CentroController {
 
     @Operation(summary = "Crear nuevo centro")
     @PostMapping
+    @PreAuthorize("@securityService.hasAccessToOrganization()")
     public ResponseEntity<CentroDto> createCentro(@Valid @RequestBody CentroDto dto) {
         return ResponseEntity.ok(service.createCentro(dto));
     }
 
     @Operation(summary = "Actualizar centro existente")
     @PutMapping("/{id}")
+    @PreAuthorize("@securityService.hasAccessToOrganization()")
     public ResponseEntity<CentroDto> updateCentro(@PathVariable Long id, @Valid @RequestBody CentroDto dto) {
         return ResponseEntity.ok(service.updateCentro(id, dto));
     }
@@ -64,6 +67,7 @@ public class CentroController {
     @ApiResponse(responseCode = "204", description = "Centro eliminado exitosamente")
     @ApiResponse(responseCode = "409", description = "No se puede eliminar porque tiene miembros asociados")
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.hasAccessToOrganization()")
     public ResponseEntity<Void> deleteCentro(@PathVariable Long id) {
         service.deleteCentro(id);
         return ResponseEntity.noContent().build();
