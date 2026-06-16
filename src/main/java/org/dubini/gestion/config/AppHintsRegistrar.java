@@ -162,7 +162,45 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
             "com.google.api.client.googleapis.json.GoogleJsonError$Details",
             "com.google.api.client.googleapis.json.GoogleJsonError$ParameterViolations",
             "com.google.api.client.googleapis.json.GoogleJsonErrorContainer",
-            "com.google.api.client.googleapis.json.GoogleJsonResponseException"
+            "com.google.api.client.googleapis.json.GoogleJsonResponseException",
+            // Core Google SDK Reflection
+            "com.google.api.client.util.Key",
+            "com.google.api.client.json.gson.GsonFactory",
+            "com.google.api.client.json.gson.GsonParser",
+            "com.google.api.client.json.gson.GsonGenerator",
+            "com.google.api.client.json.JsonFactory",
+            "com.google.api.client.json.JsonObjectParser",
+            "com.google.api.client.http.javanet.NetHttpTransport",
+            "com.google.api.client.http.HttpTransport",
+            "com.google.api.client.http.HttpRequest",
+            "com.google.api.client.http.HttpResponse",
+            "com.google.api.client.http.HttpHeaders",
+            "com.google.api.client.http.HttpHeaders$HeaderInfo",
+            "com.google.api.client.http.GenericUrl",
+            "com.google.api.client.util.ArrayMap",
+            "com.google.api.client.util.DateTime",
+            "com.google.api.client.util.Types",
+            "com.google.auth.http.HttpCredentialsAdapter",
+            "com.google.auth.oauth2.GoogleCredentials",
+            "com.google.auth.oauth2.ServiceAccountCredentials",
+            "com.google.auth.oauth2.AccessToken",
+            "com.google.auth.oauth2.OAuth2Credentials",
+            // OAuth2 and Token registration classes
+            "com.google.api.client.auth.oauth2.TokenResponse",
+            "com.google.api.client.auth.oauth2.TokenErrorResponse",
+            "com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse",
+            "com.google.api.client.googleapis.auth.oauth2.GoogleOAuthConstants",
+            "com.google.auth.oauth2.ServiceAccountCredentials$Builder",
+            "com.google.auth.oauth2.OAuth2Credentials$Builder",
+            "com.google.auth.oauth2.OAuth2Credentials$Subscription",
+            // Google Drive API Request Classes
+            "com.google.api.client.googleapis.services.AbstractGoogleClientRequest",
+            "com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest",
+            "com.google.api.services.drive.DriveRequest",
+            "com.google.api.services.drive.Drive$Files",
+            "com.google.api.services.drive.Drive$Files$Create",
+            "com.google.api.services.drive.Drive$Files$List",
+            "com.google.api.services.drive.Drive$Files$Update"
         };
         for (String className : googleModelClasses) {
             registerClassIfExists(hints, className);

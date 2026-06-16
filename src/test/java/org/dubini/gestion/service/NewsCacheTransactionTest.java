@@ -1,15 +1,19 @@
 package org.dubini.gestion.service;
 
+import org.dubini.gestion.client.CacheInvalidationClient;
 import org.dubini.gestion.dto.PublicationDTO;
+import org.dubini.gestion.dto.response.HttpResponse;
 import org.dubini.gestion.repository.NewsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -35,10 +39,33 @@ class NewsCacheTransactionTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-    @MockBean
+    @Autowired
     private CacheInvalidatorService cacheInvalidatorService;
 
     private TransactionTemplate transactionTemplate;
+
+    private static final AtomicBoolean invalidationCalled = new AtomicBoolean(false);
+
+    @TestConfiguration
+    static class TestConfig {
+        static class TestCacheInvalidatorService extends CacheInvalidatorService {
+            public TestCacheInvalidatorService(CacheInvalidationClient client) {
+                super(client);
+            }
+
+            @Override
+            public HttpResponse invalidateNewsCache() {
+                invalidationCalled.set(true);
+                return new HttpResponse("News cache invalidated");
+            }
+        }
+
+        @Bean
+        @Primary
+        public CacheInvalidatorService cacheInvalidatorService(CacheInvalidationClient client) {
+            return new TestCacheInvalidatorService(client);
+        }
+    }
 
     @BeforeEach
     void setup() {
@@ -54,7 +81,7 @@ class NewsCacheTransactionTest {
         Cache newsPageCache = cacheManager.getCache("newsPage");
         if (newsPageCache != null) newsPageCache.clear();
         
-        Mockito.reset(cacheInvalidatorService);
+        invalidationCalled.set(false);
     }
 
     @Test
@@ -76,11 +103,7 @@ class NewsCacheTransactionTest {
         assertNotNull(cachedDto);
         assertNotNull(newsCache.get("test-title-cache"));
 
-        AtomicBoolean invalidationCalled = new AtomicBoolean(false);
-        doAnswer(invocation -> {
-            invalidationCalled.set(true);
-            return null;
-        }).when(cacheInvalidatorService).invalidateNewsCache();
+        invalidationCalled.set(false);
 
         transactionTemplate.execute(status -> {
             PublicationDTO updateDto = new PublicationDTO();

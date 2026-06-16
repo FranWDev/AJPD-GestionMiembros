@@ -59,30 +59,43 @@ class NewsControllerIntegrationTest {
 
     @TestConfiguration
     static class TestConfig {
+        static class TestCacheInvalidatorService extends CacheInvalidatorService {
+            public TestCacheInvalidatorService(CacheInvalidationClient client) {
+                super(client);
+            }
+
+            @Override
+            public HttpResponse invalidateNewsCache() {
+                return new HttpResponse("News cache invalidated");
+            }
+
+            @Override
+            public HttpResponse invalidateServiceWorkersCache() {
+                return new HttpResponse("Service worker cache invalidated");
+            }
+        }
+
+        static class TestImageService extends ImageService {
+            public TestImageService(SupabaseStorageProperties properties) {
+                super(properties);
+            }
+
+            @Override
+            public ImageResponseDTO saveImage(MultipartFile file) throws IOException {
+                return new ImageResponseDTO("test.png", "https://mock.supabase.co/storage/v1/object/public/bucket/test.png", 15);
+            }
+        }
+
         @Bean
         @Primary
         public CacheInvalidatorService cacheInvalidatorService(CacheInvalidationClient client) {
-            return new CacheInvalidatorService(client) {
-                @Override
-                public HttpResponse invalidateNewsCache() {
-                    return new HttpResponse("News cache invalidated");
-                }
-                @Override
-                public HttpResponse invalidateServiceWorkersCache() {
-                    return new HttpResponse("Service worker cache invalidated");
-                }
-            };
+            return new TestCacheInvalidatorService(client);
         }
 
         @Bean
         @Primary
         public ImageService imageService(SupabaseStorageProperties properties) {
-            return new ImageService(properties) {
-                @Override
-                public ImageResponseDTO saveImage(MultipartFile file) throws IOException {
-                    return new ImageResponseDTO("test.png", "https://mock.supabase.co/storage/v1/object/public/bucket/test.png", 15);
-                }
-            };
+            return new TestImageService(properties);
         }
     }
 

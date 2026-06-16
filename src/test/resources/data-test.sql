@@ -4,4 +4,3 @@ MERGE INTO user_permissions (EMAIL, CAN_MANAGE_PERMISSIONS, CAN_MANAGE_ORGANIZAT
 ('secretaria@proyectodubini.org', false, true, false, false),
 ('comunicacion@proyectodubini.org', false, false, true, false),
 ('tesoreria@proyectodubini.org', false, false, false, true);
-
