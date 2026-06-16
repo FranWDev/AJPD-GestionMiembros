@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.google.auth.oauth2.GoogleCredentials;
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class GoogleDriveService {
@@ -37,6 +38,53 @@ public class GoogleDriveService {
             Optional<GoogleCredentials> googleCredentialsOpt) {
         this.driveService = driveServiceOpt.orElse(null);
         this.googleCredentials = googleCredentialsOpt.orElse(null);
+    }
+
+    @PostConstruct
+    public void init() {
+        if (parentFolderId != null) {
+            String original = parentFolderId;
+            parentFolderId = cleanFolderId(parentFolderId);
+            if (!original.equals(parentFolderId)) {
+                log.info("Cleaned parentFolderId configuration from '{}' to '{}'", original, parentFolderId);
+            }
+        }
+    }
+
+    public static String cleanFolderId(String input) {
+        if (input == null) {
+            return null;
+        }
+        input = input.trim();
+        if (input.contains("/folders/")) {
+            int index = input.indexOf("/folders/");
+            String remainder = input.substring(index + "/folders/".length());
+            int qIndex = remainder.indexOf('?');
+            int slashIndex = remainder.indexOf('/');
+            int endIndex = remainder.length();
+            if (qIndex != -1) {
+                endIndex = qIndex;
+            }
+            if (slashIndex != -1 && slashIndex < endIndex) {
+                endIndex = slashIndex;
+            }
+            return remainder.substring(0, endIndex);
+        }
+        if (input.contains("id=")) {
+            int index = input.indexOf("id=");
+            String remainder = input.substring(index + 3);
+            int ampersandIndex = remainder.indexOf('&');
+            int slashIndex = remainder.indexOf('/');
+            int endIndex = remainder.length();
+            if (ampersandIndex != -1) {
+                endIndex = ampersandIndex;
+            }
+            if (slashIndex != -1 && slashIndex < endIndex) {
+                endIndex = slashIndex;
+            }
+            return remainder.substring(0, endIndex);
+        }
+        return input;
     }
 
     public boolean isConfigured() {
@@ -89,6 +137,8 @@ public class GoogleDriveService {
                     .setQ("'" + subfolderId + "' in parents and trashed = false")
                     .setSpaces("drive")
                     .setFields("files(id, name, webViewLink, size, mimeType)")
+                    .setSupportsAllDrives(true)
+                    .setIncludeItemsFromAllDrives(true)
                     .execute();
 
             List<DriveFileDto> files = new ArrayList<>();
@@ -177,7 +227,9 @@ public class GoogleDriveService {
         }
 
         try {
-            driveService.files().delete(fileId).execute();
+            driveService.files().delete(fileId)
+                    .setSupportsAllDrives(true)
+                    .execute();
             log.info("Successfully deleted Google Drive file with ID: {}", fileId);
         } catch (IOException e) {
             log.error("Failed to delete file {} from Google Drive", fileId, e);
@@ -215,6 +267,7 @@ public class GoogleDriveService {
 
         File folder = driveService.files().create(fileMetadata)
                 .setFields("id")
+                .setSupportsAllDrives(true)
                 .execute();
 
         return folder.getId();
@@ -230,6 +283,8 @@ public class GoogleDriveService {
                 .setQ(query)
                 .setSpaces("drive")
                 .setFields("files(id)")
+                .setSupportsAllDrives(true)
+                .setIncludeItemsFromAllDrives(true)
                 .execute();
 
         List<File> files = result.getFiles();

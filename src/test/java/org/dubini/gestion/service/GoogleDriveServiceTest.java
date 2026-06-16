@@ -56,15 +56,21 @@ class GoogleDriveServiceTest {
         when(listMock.setQ(anyString())).thenReturn(listMock);
         when(listMock.setSpaces(anyString())).thenReturn(listMock);
         when(listMock.setFields(anyString())).thenReturn(listMock);
+        when(listMock.setSupportsAllDrives(anyBoolean())).thenReturn(listMock);
+        when(listMock.setIncludeItemsFromAllDrives(anyBoolean())).thenReturn(listMock);
         
         FileList emptyFileList = new FileList();
         emptyFileList.setFiles(Collections.emptyList());
         when(listMock.execute()).thenReturn(emptyFileList);
 
+        // Configure delete
+        when(deleteMock.setSupportsAllDrives(anyBoolean())).thenReturn(deleteMock);
+
         // Configure create to return a dummy file with ID
         File dummyFile = new File();
         dummyFile.setId("dummy-id");
         when(createMock.setFields(anyString())).thenReturn(createMock);
+        when(createMock.setSupportsAllDrives(anyBoolean())).thenReturn(createMock);
         when(createMock.execute()).thenReturn(dummyFile);
     }
 
@@ -120,5 +126,18 @@ class GoogleDriveServiceTest {
         assertEquals("DNI-1.pdf", result.get(0).getName());
         assertEquals("file1-id", result.get(0).getId());
         assertEquals("https://view/file1", result.get(0).getUrl());
+    }
+
+    @Test
+    void testCleanFolderId() {
+        assertEquals("1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0", 
+            GoogleDriveService.cleanFolderId("https://drive.google.com/drive/folders/1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto."));
+        assertEquals("1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0", 
+            GoogleDriveService.cleanFolderId("https://drive.google.com/drive/u/0/folders/1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0"));
+        assertEquals("1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0", 
+            GoogleDriveService.cleanFolderId("https://drive.google.com/open?id=1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0&authuser=0"));
+        assertEquals("1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0", 
+            GoogleDriveService.cleanFolderId("1SM2_NdeH5kKHYNhkARQNZWx1MeOqZdk0"));
+        assertNull(GoogleDriveService.cleanFolderId(null));
     }
 }

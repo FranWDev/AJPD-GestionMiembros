@@ -38,21 +38,37 @@ public class GoogleDriveConfig {
         if (credentialsJson != null && !credentialsJson.trim().isEmpty()) {
             try {
                 log.info("Loading Google Credentials from explicit JSON string.");
-                return GoogleCredentials.fromStream(
+                GoogleCredentials creds = GoogleCredentials.fromStream(
                                 new ByteArrayInputStream(credentialsJson.getBytes(StandardCharsets.UTF_8)))
                         .createScoped(Collections.singleton(DriveScopes.DRIVE));
+                if (creds instanceof com.google.auth.oauth2.ServiceAccountCredentials) {
+                    log.info("Loaded Google Service Account email (from JSON): {}", ((com.google.auth.oauth2.ServiceAccountCredentials) creds).getClientEmail());
+                } else {
+                    log.info("Loaded Google Credentials class (from JSON): {}", creds.getClass().getName());
+                }
+                return creds;
             } catch (Exception e) {
                 log.error("Failed to load GoogleCredentials from JSON string.", e);
             }
         }
 
         // Fallback to Application Default Credentials (ADC) which automatically picks up GOOGLE_APPLICATION_CREDENTIALS file path
+        GoogleCredentials credentials = null;
         try {
             log.info("Attempting to load Google Application Default Credentials (ADC).");
-            return GoogleCredentials.getApplicationDefault()
+            credentials = GoogleCredentials.getApplicationDefault()
                     .createScoped(Collections.singleton(DriveScopes.DRIVE));
         } catch (Exception e) {
             log.warn("Could not load Google Application Default Credentials (ADC): {}", e.getMessage());
+        }
+
+        if (credentials != null) {
+            if (credentials instanceof com.google.auth.oauth2.ServiceAccountCredentials) {
+                log.info("Loaded Google Service Account email: {}", ((com.google.auth.oauth2.ServiceAccountCredentials) credentials).getClientEmail());
+            } else {
+                log.info("Loaded Google Credentials class: {}", credentials.getClass().getName());
+            }
+            return credentials;
         }
 
         log.warn("No Google Credentials could be loaded. Google Drive will run in Mock/No-op mode.");
