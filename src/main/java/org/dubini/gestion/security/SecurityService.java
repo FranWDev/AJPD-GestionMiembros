@@ -61,22 +61,25 @@ public class SecurityService {
             }
         }
 
+        String name = auth.getName();
+        if (name != null && name.contains("@")) {
+            return evaluateUserPermission(name, type);
+        }
+
         return false;
     }
 
-    @Cacheable(value = "userPermissions", key = "#email")
+    @Cacheable(value = "userPermissions", key = "#email.toLowerCase().trim() + '_' + #type.name()")
     public boolean evaluateUserPermission(String email, UserPermissionType type) {
-        log.debug("Evaluating permission {} for user {}", type, email);
-        Optional<UserPermission> permissionOpt = userPermissionRepo.findByEmail(email);
+        String cleanEmail = email.toLowerCase().trim();
+        log.debug("Evaluating permission {} for user {}", type, cleanEmail);
+        Optional<UserPermission> permissionOpt = userPermissionRepo.findByEmail(cleanEmail);
         if (permissionOpt.isEmpty()) {
             // Default: Any other email has read-only access (evaluates to false for write permissions)
             return false;
         }
 
         UserPermission perm = permissionOpt.get();
-        if (perm.isCanManagePermissions()) {
-            return true; // presidencia / admin has access to everything
-        }
 
         return switch (type) {
             case PERMISSIONS -> perm.isCanManagePermissions();

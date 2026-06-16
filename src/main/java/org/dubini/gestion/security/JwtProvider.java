@@ -34,13 +34,26 @@ public class JwtProvider {
     }
 
     public String generateToken() {
+        return generateToken("backoffice");
+    }
+
+    public String generateToken(String subject) {
         Instant now = Instant.now();
         return Jwts.builder()
-                .subject("backoffice")
+                .subject(subject)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(jwtExpirationMs)))
                 .signWith(key)
                 .compact();
+    }
+
+    public String getSubjectFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     public String generateShortLivedToken() {
@@ -65,7 +78,7 @@ public class JwtProvider {
             Date expiration = claims.getExpiration();
             Instant now = Instant.now();
 
-            return "backoffice".equals(subject) && expiration != null && expiration.toInstant().isAfter(now);
+            return subject != null && !subject.isEmpty() && expiration != null && expiration.toInstant().isAfter(now);
         } catch (ExpiredJwtException e) {
             log.error("ERROR: Token expired: {}", e.getMessage(), e);
             return false;

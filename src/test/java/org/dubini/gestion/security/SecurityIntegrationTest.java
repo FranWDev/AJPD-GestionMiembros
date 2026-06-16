@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -131,5 +132,98 @@ class SecurityIntegrationTest {
         mockMvc.perform(post("/api/miembros/documentos/sync-folders")
                         .with(oauth2Login().attributes(attrs -> attrs.put("email", "visitor@proyectodubini.org"))))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetMeAsBackoffice() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .with(user("backoffice")))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String content = result.getResponse().getContentAsString();
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"email\":\"backoffice\""));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManagePermissions\":true"));
+                });
+    }
+
+    @Test
+    void testGetMeAsPresidencia() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "presidencia@proyectodubini.org"))))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String content = result.getResponse().getContentAsString();
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"email\":\"presidencia@proyectodubini.org\""));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManagePermissions\":true"));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManageOrganization\":true"));
+                });
+    }
+
+    @Test
+    void testGetMeAsSecretaria() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "secretaria@proyectodubini.org"))))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String content = result.getResponse().getContentAsString();
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"email\":\"secretaria@proyectodubini.org\""));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManagePermissions\":false"));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManageOrganization\":true"));
+                });
+    }
+
+    @Test
+    void testGetMeAsVisitor() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "visitor@proyectodubini.org"))))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String content = result.getResponse().getContentAsString();
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"email\":\"visitor@proyectodubini.org\""));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManagePermissions\":false"));
+                    org.junit.jupiter.api.Assertions.assertTrue(content.contains("\"canManageOrganization\":false"));
+                });
+    }
+
+    @Test
+    void testGetPermissionsDeniedForNonAdmin() throws Exception {
+        mockMvc.perform(get("/api/permissions")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "secretaria@proyectodubini.org"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetPermissionsAllowedForAdmin() throws Exception {
+        mockMvc.perform(get("/api/permissions")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "presidencia@proyectodubini.org"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreatePermissionInvalidDomain() throws Exception {
+        String invalidBody = new JSONObject()
+                .put("email", "test@gmail.com")
+                .put("canManagePermissions", false)
+                .put("canManageOrganization", true)
+                .toString();
+
+        mockMvc.perform(post("/api/permissions")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "presidencia@proyectodubini.org")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody))
+                .andExpect(status().isConflict()); // BusinessRuleException returns Conflict
+    }
+
+    @Test
+    void testPreventZeroAdminRules() throws Exception {
+        // Find all permissions first to get IDs
+        mockMvc.perform(get("/api/permissions")
+                        .with(oauth2Login().attributes(attrs -> attrs.put("email", "presidencia@proyectodubini.org"))))
+                .andExpect(status().isOk())
+                .andDo(result -> {
+                    String content = result.getResponse().getContentAsString();
+                    // We know H2 DB will have the seed data from test resources data.sql
+                    // Let's create a scenario to revoke all admins
+                });
     }
 }

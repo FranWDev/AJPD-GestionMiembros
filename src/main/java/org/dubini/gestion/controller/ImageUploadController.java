@@ -11,6 +11,7 @@ import org.dubini.gestion.dto.response.ImageResponseDTO;
 import org.dubini.gestion.service.ImageService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +22,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/images")
 @Tag(name = "Imágenes", description = "Endpoints para la subida y gestión de archivos de imagen")
+@PreAuthorize("@securityService.hasAccessToWeb()")
 public class ImageUploadController {
 
     private static final int MAX_WIDTH = 4096;

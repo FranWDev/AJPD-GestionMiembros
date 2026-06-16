@@ -57,8 +57,9 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (token != null && jwtProvider.validateToken(token)) {
+            String subject = jwtProvider.getSubjectFromToken(token);
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    "backoffice", null, Collections.emptyList());
+                    subject, null, Collections.emptyList());
             SecurityContextHolder.clearContext();
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

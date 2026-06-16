@@ -36,6 +36,7 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
 
         registerClassIfExists(hints, "org.dubini.gestion.dto.LoginRequest");
         registerClassIfExists(hints, "org.dubini.gestion.dto.JwtResponse");
+        registerClassIfExists(hints, "org.dubini.gestion.dto.UserPermissionResponse");
         registerClassIfExists(hints, "org.dubini.gestion.controller.AuthController");
         registerClassIfExists(hints, "org.dubini.gestion.service.AuthService");
 
@@ -96,6 +97,8 @@ public class AppHintsRegistrar implements RuntimeHintsRegistrar {
         registerClassIfExists(hints, "org.dubini.gestion.service.GoogleDriveService");
         registerClassIfExists(hints, "org.dubini.gestion.service.GoogleDriveService$DriveFileDto");
         registerClassIfExists(hints, "org.dubini.gestion.controller.MiembroDocumentoController");
+        registerClassIfExists(hints, "org.dubini.gestion.controller.UserPermissionController");
+        registerClassIfExists(hints, "org.dubini.gestion.service.UserPermissionService");
 
         // Google SDK models and client base classes
         String[] googleModelClasses = {
