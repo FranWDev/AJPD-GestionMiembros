@@ -31,6 +31,17 @@ public class MiembroDocumentoController {
         return ResponseEntity.ok(googleDriveService.listFiles(id, tipo.toUpperCase()));
     }
 
+    @Operation(summary = "Obtener token de acceso temporal para Google Drive", description = "Obtiene el token de acceso OAuth del Service Account para descargas directas en el frontend")
+    @GetMapping("/token/google")
+    @PreAuthorize("@securityService.hasAccessToOrganization()")
+    public ResponseEntity<Map<String, String>> getAccessToken() {
+        String token = googleDriveService.getAccessToken();
+        if (token == null) {
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok(Map.of("accessToken", token));
+    }
+
     @Operation(summary = "Generar URL de subida para Google Drive", description = "Inicia una sesión de subida resumible en Google Drive y devuelve la URL")
     @PostMapping("/{tipo}/upload-url")
     @PreAuthorize("@securityService.hasAccessToOrganization()")

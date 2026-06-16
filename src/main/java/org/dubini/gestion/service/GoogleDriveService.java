@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import jakarta.annotation.PostConstruct;
 
 @Service
@@ -136,7 +137,7 @@ public class GoogleDriveService {
             FileList result = driveService.files().list()
                     .setQ("'" + subfolderId + "' in parents and trashed = false")
                     .setSpaces("drive")
-                    .setFields("files(id, name, webViewLink, size, mimeType)")
+                    .setFields("files(id, name, webViewLink, thumbnailLink, size, mimeType)")
                     .setSupportsAllDrives(true)
                     .setIncludeItemsFromAllDrives(true)
                     .execute();
@@ -149,7 +150,8 @@ public class GoogleDriveService {
                             file.getName(),
                             file.getWebViewLink(),
                             file.getSize() != null ? file.getSize() : 0L,
-                            file.getMimeType()
+                            file.getMimeType(),
+                            file.getThumbnailLink()
                     ));
                 }
             }
@@ -199,7 +201,7 @@ public class GoogleDriveService {
 
             HttpEntity<String> entity = new HttpEntity<>(fileMetadata.toString(), headers);
 
-            String requestUrl = "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable";
+            String requestUrl = "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true";
             ResponseEntity<String> response = restTemplate.postForEntity(requestUrl, entity, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK || response.getStatusCode() == HttpStatus.CREATED) {
@@ -227,12 +229,23 @@ public class GoogleDriveService {
         }
 
         try {
-            driveService.files().delete(fileId)
+            // Trashing the file (setting trashed = true) instead of permanent deletion.
+            // Permanent deletion (files().delete()) requires Manager permission on Shared Drives,
+            // whereas trashing (files().update()) only requires edit access (Contributor/Content Manager).
+            File trashedMetadata = new File().setTrashed(true);
+            driveService.files().update(fileId, trashedMetadata)
                     .setSupportsAllDrives(true)
                     .execute();
-            log.info("Successfully deleted Google Drive file with ID: {}", fileId);
+            log.info("Successfully trashed/deleted Google Drive file with ID: {}", fileId);
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("Google Drive file with ID {} was already deleted or not found.", fileId);
+            } else {
+                log.error("Failed to delete/trash file {} from Google Drive due to Google API error", fileId, e);
+                throw new RuntimeException("Error al eliminar el archivo de Google Drive", e);
+            }
         } catch (IOException e) {
-            log.error("Failed to delete file {} from Google Drive", fileId, e);
+            log.error("Failed to delete/trash file {} from Google Drive", fileId, e);
             throw new RuntimeException("Error al eliminar el archivo de Google Drive", e);
         }
     }
@@ -294,6 +307,22 @@ public class GoogleDriveService {
         return null;
     }
 
+    public String getAccessToken() {
+        if (googleCredentials == null) {
+            return null;
+        }
+        try {
+            googleCredentials.refreshIfExpired();
+            if (googleCredentials.getAccessToken() == null) {
+                googleCredentials.refresh();
+            }
+            return googleCredentials.getAccessToken().getTokenValue();
+        } catch (IOException e) {
+            log.error("Failed to get Google Credentials access token", e);
+            return null;
+        }
+    }
+
     // ================= DTOs =================
 
     public static class DriveFileDto {
@@ -302,15 +331,21 @@ public class GoogleDriveService {
         private String url;
         private long size;
         private String mimeType;
+        private String thumbnailUrl;
 
         public DriveFileDto() {}
 
         public DriveFileDto(String id, String name, String url, long size, String mimeType) {
+            this(id, name, url, size, mimeType, null);
+        }
+
+        public DriveFileDto(String id, String name, String url, long size, String mimeType, String thumbnailUrl) {
             this.id = id;
             this.name = name;
             this.url = url;
             this.size = size;
             this.mimeType = mimeType;
+            this.thumbnailUrl = thumbnailUrl;
         }
 
         public String getId() {
@@ -351,6 +386,14 @@ public class GoogleDriveService {
 
         public void setMimeType(String mimeType) {
             this.mimeType = mimeType;
+        }
+
+        public String getThumbnailUrl() {
+            return thumbnailUrl;
+        }
+
+        public void setThumbnailUrl(String thumbnailUrl) {
+            this.thumbnailUrl = thumbnailUrl;
         }
     }
 }

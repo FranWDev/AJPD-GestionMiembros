@@ -38,8 +38,14 @@ public class GoogleDriveConfig {
         if (credentialsJson != null && !credentialsJson.trim().isEmpty()) {
             try {
                 log.info("Loading Google Credentials from explicit JSON string.");
+                String cleanJson = credentialsJson.trim();
+                if (cleanJson.startsWith("'") && cleanJson.endsWith("'")) {
+                    cleanJson = cleanJson.substring(1, cleanJson.length() - 1);
+                }
+                cleanJson = cleanJson.replace("\\n", "\n").replace("\\\"", "\"");
+
                 GoogleCredentials creds = GoogleCredentials.fromStream(
-                                new ByteArrayInputStream(credentialsJson.getBytes(StandardCharsets.UTF_8)))
+                                new ByteArrayInputStream(cleanJson.getBytes(StandardCharsets.UTF_8)))
                         .createScoped(Collections.singleton(DriveScopes.DRIVE));
                 if (creds instanceof com.google.auth.oauth2.ServiceAccountCredentials) {
                     log.info("Loaded Google Service Account email (from JSON): {}", ((com.google.auth.oauth2.ServiceAccountCredentials) creds).getClientEmail());

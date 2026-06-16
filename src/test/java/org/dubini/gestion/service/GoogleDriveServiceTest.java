@@ -34,7 +34,7 @@ class GoogleDriveServiceTest {
     private Drive.Files.Create createMock;
 
     @Mock
-    private Drive.Files.Delete deleteMock;
+    private Drive.Files.Update updateMock;
 
     @Mock
     private GoogleCredentials googleCredentials;
@@ -50,7 +50,7 @@ class GoogleDriveServiceTest {
         when(driveService.files()).thenReturn(filesMock);
         when(filesMock.list()).thenReturn(listMock);
         when(filesMock.create(any(File.class))).thenReturn(createMock);
-        when(filesMock.delete(anyString())).thenReturn(deleteMock);
+        when(filesMock.update(anyString(), any(File.class))).thenReturn(updateMock);
 
         // Configure lists to return empty by default
         when(listMock.setQ(anyString())).thenReturn(listMock);
@@ -63,8 +63,8 @@ class GoogleDriveServiceTest {
         emptyFileList.setFiles(Collections.emptyList());
         when(listMock.execute()).thenReturn(emptyFileList);
 
-        // Configure delete
-        when(deleteMock.setSupportsAllDrives(anyBoolean())).thenReturn(deleteMock);
+        // Configure update
+        when(updateMock.setSupportsAllDrives(anyBoolean())).thenReturn(updateMock);
 
         // Configure create to return a dummy file with ID
         File dummyFile = new File();
@@ -87,8 +87,8 @@ class GoogleDriveServiceTest {
     void testDeleteFile() throws IOException {
         googleDriveService.deleteFile("file-id-123");
 
-        verify(filesMock, times(1)).delete("file-id-123");
-        verify(deleteMock, times(1)).execute();
+        verify(filesMock, times(1)).update(eq("file-id-123"), any(File.class));
+        verify(updateMock, times(1)).execute();
     }
 
     @Test
